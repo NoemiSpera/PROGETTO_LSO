@@ -1,4 +1,5 @@
-#include "modelli_client.h"
+#include "../header_file/modelli_client.h"
+#include "../header_file/colori.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,18 +10,23 @@
 #include <signal.h>
 #include <pthread.h>
 
+#ifndef VARIABILI_H
+#define VARIABILI_H
+
 #define PERCORSO_SOCKET "/tmp/socket_locale"
-#define MAX_NOME 50
+#define MAX_BUF 256
+
+#endif
 
 int connetti_al_server()
 {
 
     int client_fd;
     struct sockaddr_un server_addr;
-    char nome[MAX_NOME];
 
     client_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (client_fd == -1) {
+    if (client_fd == -1) 
+    {
         perror("Errore nella creazione del socket");
         exit(1);
     }
@@ -35,15 +41,37 @@ int connetti_al_server()
         exit(1);
     }
 
-    printf("Connesso al server!\n");
-
-    // Richiedi al giocatore di inserire il proprio nome
-    printf("Inserisci il tuo nome: ");
-    fgets(nome, MAX_NOME, stdin);
-    nome[strcspn(nome, "\n")] = 0;  // Rimuovi il carattere di newline
-
-    // Invia il nome al server
-    write(client_fd, nome, strlen(nome) + 1);
-
     return client_fd;
+}
+
+
+
+void ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
+{
+    ssize_t n;
+    
+    memset(buffer, 0, buf_size); // Puliamo il buffer
+    n = recv(client_fd, buffer, buf_size - 1, 0);
+    if(n == -1)
+    {
+        perror("Errore nella ricezione del messaggio");
+        close(client_fd);
+        exit(1);
+    }
+    if (n > 0) 
+    {
+        buffer[n] = '\0';
+    }
+    
+}
+
+
+void invia_messaggi(int client_fd, char *msg)
+{
+    if(send(client_fd, msg, strlen(msg) + 1, 0) == -1)
+    {
+        perror("Errore nell'invio della risposta al server\n");
+        close(client_fd);
+        exit(1);
+    }
 }
