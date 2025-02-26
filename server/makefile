@@ -4,7 +4,7 @@ server: server.o connessione.o impl_modelli.o
 
 #regole per la compilazione di ogni singolo file sorgente
 server.o:
-	gcc -c source_file/server.c -o server.o
+	gcc -c server.c -o server.o
 
 connessione.o:
 	gcc -c source_file/connessione.c -o connessione.o

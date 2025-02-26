@@ -1,4 +1,4 @@
-#include "../header_file/modelli_server.h"
+#include "header_file/modelli_server.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -16,7 +16,9 @@ int main()
     
 
     creazione_socket(&server_socket);
+
     messaggio_benvenuto();
+    
     accetta_connessioni(server_socket,partite,&num_partite);
 
     

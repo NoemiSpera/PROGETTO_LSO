@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <signal.h>
 #include <pthread.h>
 
@@ -55,8 +57,12 @@ typedef struct
 
 
 
+//connessione col client in connessione.c
+void creazione_socket(int *server_fd);
+void accetta_connessioni(int server_fd,Partita *partite[],int* numero_partite);
 
-//messaggi di stampa
+
+//messaggi su stdout
 void stampa_bordo();
 void stampa_testo_centrato(const char *testo);
 void messaggio_benvenuto();
@@ -67,11 +73,10 @@ void inizializza_giocatore(Giocatore *giocatore, int socket, int id_partita, con
 void inizializza_logica_partita(Logica_partita *logica, Partita *partita);
 
 
-//connessione col client
-void creazione_socket(int *server_fd);
-void accetta_connessioni(int server_fd,Partita *partite[],int* numero_partite);
+//gestione client
 void *gestisci_client(void *arg);
-void gestisci_scelta(int client_fd, char scelta);
+void gestisci_scelta(int client_fd, char scelta, char *nome_client);
+
 
 //scambio messaggi
 void invia_messaggi(int client_fd, char *msg);
