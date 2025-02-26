@@ -39,7 +39,7 @@ void creazione_socket(int *server_fd)
 
 
 
-void accetta_connessioni(int server_fd, Partita *partite[],int* numero_partite)
+void accetta_connessioni(int server_fd)
 {
     struct sockaddr_un client_addr;
     socklen_t client_addr_len = sizeof(struct sockaddr_un);

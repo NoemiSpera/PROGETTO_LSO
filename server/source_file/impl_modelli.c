@@ -2,10 +2,14 @@
 #include "../header_file/colori.h"
 
 #define LARGHEZZA 60
+#define MAX_PARTITE 100
+#define MAX_COLLEGATI 100
 #define MAX 1024
+
 
 //variabili globali
 pthread_mutex_t lock;
+
 
 
 //inizializzazioni
@@ -42,7 +46,6 @@ void inizializza_logica_partita(Logica_partita *logica, Partita *partita)
     logica->stato=0;
     logica->turno=0;
     logica->risultato=-1;
-    pthread_mutex_init(&logica->lock,NULL);   // inizializza il mutex a logica->lock
 }
 
 
@@ -107,7 +110,7 @@ void *gestisci_client(void *arg)
     invia_messaggi(client_socket, benvenuto);
     usleep(500000);
     
-    char msg[] = "Vuoi creare una nuova partita(C) O unirti  a una esistente (U)?\n";
+    char msg[] = "Vuoi creare una nuova partita(C) o unirti  a una esistente U)?\n";
     invia_messaggi(client_socket, msg);
     
     memset(buffer, 0, sizeof(buffer));
@@ -123,12 +126,14 @@ void *gestisci_client(void *arg)
 
 void gestisci_scelta(int client_fd, char scelta, char *nome_client)
 {
+    char buffer[MAX];
     switch (scelta)
     {
         case 'C':
         case 'c':
             printf("%s ha scelto di creare una nuova partita\n", nome_client);
-            //creazione_partita();
+            printf("Creazione in corso...\n");
+            //creazione_partita(client_fd, nome_client);
             break;
         
         case 'U':
@@ -141,6 +146,20 @@ void gestisci_scelta(int client_fd, char scelta, char *nome_client)
             invia_messaggi(client_fd, "Scleta non valida");
             break;
     }
+}
+
+
+
+void creazione_partita(int client_fd, char *nome)
+{
+    Partita *partite[MAX_PARTITE];
+    Giocatore *giocatori[MAX_COLLEGATI];
+    int *num_partite;
+
+
+
+
+
 }
 
 

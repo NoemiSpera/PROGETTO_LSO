@@ -16,6 +16,8 @@ int main()
     char buffer[MAX];
     char *nome = malloc(MAX_NOME * sizeof(char));
     char scelta;
+    char crea_partita[1];
+   
     
     //connessione al server
     client_fd=connetti_al_server();
@@ -38,7 +40,6 @@ int main()
     scanf(" %c", &scelta);
     char msg[2]={scelta, '\0'};
     invia_messaggi(client_fd, msg);
-
 
    
     close(client_fd);

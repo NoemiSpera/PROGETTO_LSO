@@ -5,13 +5,12 @@
 #include <sys/un.h>
 
 
-#define MAX_PARTITE 100
 
 int main()
 {
     int server_socket;
-    Partita *partite[MAX_PARTITE];
-    int num_partite = 0;
+    
+   
     pthread_mutex_init(&lock, NULL);
     
 
@@ -19,7 +18,7 @@ int main()
 
     messaggio_benvenuto();
     
-    accetta_connessioni(server_socket,partite,&num_partite);
+    accetta_connessioni(server_socket);
 
     
     pthread_mutex_destroy(&lock);

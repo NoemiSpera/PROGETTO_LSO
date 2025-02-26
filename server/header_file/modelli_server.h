@@ -15,12 +15,14 @@
 #define N 3
 #define MAX_NOME 50
 #define MAX_GIOCATORI 2
+#define MAX_COLLEGATI 100
 
 #endif
 
 //variabili
 extern pthread_mutex_t lock;
-
+//extern Partita *partite[MAX_PARTITE];
+//extern Giocatore *giocatori[MAX_COLLEGATI];
 
 
 
@@ -41,7 +43,6 @@ typedef struct
     int id_partita;
     Giocatore *giocatori[MAX_GIOCATORI];
     char griglia[N][N];
-    pthread_t thread;
 } Partita;
 
 
@@ -52,14 +53,13 @@ typedef struct
     int stato;                  /* 0 = "nuova_creazione" | 1 = "in corso" | 2 = "terminata" */
     int turno;                  /* 0 = "non è il tuo turno" | 1 = "è il tuo turno" */
     int risultato;              /* 0 = "pareggio" | 1 = "vittoria giocatore 1" | 2 = "vittoria giocatore 2" | -1 = "ancora nessun risultato" */
-    pthread_mutex_t lock;
 } Logica_partita;
 
 
 
 //connessione col client in connessione.c
 void creazione_socket(int *server_fd);
-void accetta_connessioni(int server_fd,Partita *partite[],int* numero_partite);
+void accetta_connessioni(int server_fd);
 
 
 //messaggi su stdout
@@ -77,6 +77,8 @@ void inizializza_logica_partita(Logica_partita *logica, Partita *partita);
 void *gestisci_client(void *arg);
 void gestisci_scelta(int client_fd, char scelta, char *nome_client);
 
+//gestione del gioco
+void creazione_partita(int client_fd, char *nome);
 
 //scambio messaggi
 void invia_messaggi(int client_fd, char *msg);
