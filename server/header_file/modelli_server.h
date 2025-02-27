@@ -9,22 +9,19 @@
 #include <signal.h>
 #include <pthread.h>
 
-#ifndef VARIABILI_H
-#define VARIABILI_H
+
 
 #define N 3
 #define MAX_NOME 50
 #define MAX_GIOCATORI 2
+#define MAX_PARTITE 100
 #define MAX_COLLEGATI 100
+#define MAX_LOGICA 100
+#define LARGHEZZA 60
+#define MAX 1024
 
-#endif
-
-//variabili
-extern pthread_mutex_t lock;
-//extern Partita *partite[MAX_PARTITE];
-//extern Giocatore *giocatori[MAX_COLLEGATI];
-
-
+//variabili globali
+ extern pthread_mutex_t lock;
 
 //strutture
 typedef struct 
@@ -34,26 +31,20 @@ typedef struct
     int id_partita;
     int stato;                  /* 0 = "non è il suo turno" | 1 = "è il suo turno" */
     int simbolo;                /* 0 = "O" | 1 = "X" | -1 = "nessun simbolo assegnato" */
-} Giocatore;
+} Giocatori;
 
 
 
 typedef struct 
 {
-    int id_partita;
-    Giocatore *giocatori[MAX_GIOCATORI];
+    int id;
+    Giocatori *giocatore[MAX_GIOCATORI];
     char griglia[N][N];
+    int stato; 
+    int turno;
+    int risultato;
+    pthread_t thread;
 } Partita;
-
-
-
-typedef struct 
-{
-    Partita *partita;
-    int stato;                  /* 0 = "nuova_creazione" | 1 = "in corso" | 2 = "terminata" */
-    int turno;                  /* 0 = "non è il tuo turno" | 1 = "è il tuo turno" */
-    int risultato;              /* 0 = "pareggio" | 1 = "vittoria giocatore 1" | 2 = "vittoria giocatore 2" | -1 = "ancora nessun risultato" */
-} Logica_partita;
 
 
 
@@ -68,9 +59,9 @@ void stampa_testo_centrato(const char *testo);
 void messaggio_benvenuto();
 
 //inizializzazioni
-void inizializza_griglia(Partita *partita);
-void inizializza_giocatore(Giocatore *giocatore, int socket, int id_partita, const char *nome);
-void inizializza_logica_partita(Logica_partita *logica, Partita *partita);
+void inizializza_griglia(char griglia[N][N]);
+Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
+Partita *inizializza_partita(int id_partita, int socket_giocatore, char *nome_giocatore);
 
 
 //gestione client
@@ -78,7 +69,7 @@ void *gestisci_client(void *arg);
 void gestisci_scelta(int client_fd, char scelta, char *nome_client);
 
 //gestione del gioco
-void creazione_partita(int client_fd, char *nome);
+void crea_partita(int client_fd, char *nome);
 
 //scambio messaggi
 void invia_messaggi(int client_fd, char *msg);

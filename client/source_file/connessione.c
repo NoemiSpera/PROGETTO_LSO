@@ -2,13 +2,10 @@
 #include "../header_file/colori.h"
 
 
-#ifndef VARIABILI_H
-#define VARIABILI_H
-
 #define PERCORSO_SOCKET "/tmp/socket_locale"
 #define MAX_BUF 256
 
-#endif
+
 
 int connetti_al_server()
 {

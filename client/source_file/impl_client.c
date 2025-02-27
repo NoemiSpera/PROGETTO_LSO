@@ -1,15 +1,10 @@
 #include "../header_file/modelli_client.h"
 #include "../header_file/colori.h"
 
-#ifndef VARIABILI_H
-#define VARIABILI_H
 
 #define MAX_NOME 50 
 
-#endif
-
-
-
+//scambio messaggi
 void ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
 {
     ssize_t n;
@@ -43,15 +38,7 @@ void invia_messaggi(int client_fd, char *msg)
 
 
 
-
-
-
-
-
-
-
-
-
+//input da tastiera
 char *inserisci_nome()
 {
     char *nome=malloc(MAX_NOME * sizeof(char));
@@ -79,6 +66,8 @@ void nascondi_input() {
     // Applica i nuovi settings
     tcsetattr(STDIN_FILENO, TCSANOW, &new_attr);
 }
+
+
 
 void ripristina_input() {
     struct termios old_attr;

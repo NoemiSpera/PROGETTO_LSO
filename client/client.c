@@ -2,13 +2,10 @@
 #include "header_file/colori.h"
 
 
-#ifndef VARIABILI_H
-#define VARIABILI_H
-
 #define MAX 1024
 #define MAX_NOME 50
 
-#endif
+
 
 int main()
 {
@@ -16,8 +13,7 @@ int main()
     char buffer[MAX];
     char *nome = malloc(MAX_NOME * sizeof(char));
     char scelta;
-    char crea_partita[1];
-   
+
     
     //connessione al server
     client_fd=connetti_al_server();
@@ -28,7 +24,7 @@ int main()
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    //richiesta di creazione o patecpazione da altre partite
+    //richiesta di creazione o patecpazione ad altre partite
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf(UNDERLINE YELLOW "%s" RESET, buffer);
     
@@ -41,6 +37,11 @@ int main()
     char msg[2]={scelta, '\0'};
     invia_messaggi(client_fd, msg);
 
+    //messaggio partita creata
+    ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+    printf("%s", buffer);
+
+    
    
     close(client_fd);
     return 0;

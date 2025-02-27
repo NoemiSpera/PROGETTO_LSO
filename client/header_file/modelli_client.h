@@ -18,6 +18,7 @@ int connetti_al_server();
 void ricevi_messaggi(int client_fd, char* buffer, size_t buf_size);
 void invia_messaggi(int client_fd, char *msg);
 
+
 //funzioni per input da tastiera
 void nascondi_input();
 void ripristina_input();

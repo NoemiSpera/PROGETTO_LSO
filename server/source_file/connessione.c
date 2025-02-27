@@ -1,6 +1,7 @@
 #include "../header_file/modelli_server.h"
 #include "../header_file/colori.h"
 
+
 #define PERCORSO_SOCKET "/tmp/socket_locale"
 #define MAX 1024
 #define NMAX_NOME 50
