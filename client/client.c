@@ -14,7 +14,7 @@ int main()
     char *nome = malloc(MAX_NOME * sizeof(char));
     char scelta;
 
-    
+
     //connessione al server
     client_fd=connetti_al_server();
     
@@ -24,24 +24,33 @@ int main()
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
+
     //richiesta di creazione o patecpazione ad altre partite
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf(UNDERLINE YELLOW "%s" RESET, buffer);
     
-    
-    // Invio risposta al server
-    printf("Inserisci la tua scelta: \n");
-    printf("C) Crea partita\n");
-    printf("U) UNisciti ad una partita esistente\n");
-    scanf(" %c", &scelta);
-    char msg[2]={scelta, '\0'};
-    invia_messaggi(client_fd, msg);
+    while (1)
+    {
+        // Invio risposta al server
+        scanf(" %c", &scelta);
+        printf("hai inserito: %c\n", scelta);
 
-    //messaggio partita creata
-    ricevi_messaggi(client_fd, buffer, sizeof(buffer));
-    printf("%s", buffer);
 
-    
+        if (scelta == 'Q' || scelta == 'q') {
+            printf("Uscendo dal programma...\n");
+            break;
+        }
+
+
+        char msg[2]={scelta, '\0'};
+        invia_messaggi(client_fd, msg);
+        //send(client_fd, msg, sizeof(msg), 0);
+
+        //messaggio partita creata
+        ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+        printf("%s", buffer);
+
+    }
    
     close(client_fd);
     return 0;

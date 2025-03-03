@@ -10,7 +10,7 @@ int main()
 {
     int server_socket;
     
-   pthread_mutex_init(&lock, NULL);
+    pthread_mutex_init(&lock, NULL);
     
     creazione_socket(&server_socket);
 

@@ -25,49 +25,66 @@ void *gestisci_client(void *arg)
     printf("%s ha fatto accesso al server\n", buffer);
     strcpy(nome,buffer);
 
+    Giocatori *giocatore = inizializza_giocatore(client_socket,-1,buffer, "-1");
+
     char benvenuto[256];
     snprintf(benvenuto, sizeof(benvenuto), "Ciao %.200s, benvenuto nel server!", buffer);
     invia_messaggi(client_socket, benvenuto);
     usleep(500000);
     
-    char msg[] = "Vuoi creare una nuova partita(C) o unirti  a una esistente U)?\n";
+    char msg[] = "Vuoi creare una nuova partita(C) o unirti  a una esistente (U)?\n";
     invia_messaggi(client_socket, msg);
     
     memset(buffer, 0, sizeof(buffer));
-    if(ricevi_messaggi(client_socket, buffer, sizeof(buffer)) > 0)
-    {
-        pthread_mutex_lock(&lock);
-        gestisci_scelta(client_socket, buffer[0], nome);
-        pthread_mutex_unlock(&lock);
+   
+    printf("Attendo ricezione del messaggio...\n");
+
+    int bytes_ricevuti = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
+
+    printf("Byte ricevuti: %d\n", bytes_ricevuti);
+
+    if (bytes_ricevuti > 0) {
+        buffer[bytes_ricevuti] = '\0';  // Assicura una stringa valida
+        printf("Scelta ricevuta: %s\n", buffer);
+        printf("carattere: %c (ASCII: %d)\n", buffer[0], buffer[0]);
+    
+        
+        gestisci_scelta(giocatore, buffer[0]);
+        
+    } else {
+        printf("Errore nel ricevere la scelta\n");
+        free(giocatore);
+        close(client_socket);
+        return NULL;
     }
 
-    close(client_socket);    
+    //close(client_socket);    
 }
 
 
 
-void gestisci_scelta(int client_fd, char scelta, char *nome_client)
+void gestisci_scelta(Giocatori *giocatore, char scelta)
 {
-    char buffer[MAX];
-    switch (scelta)
-    {
-        case 'C':
-        case 'c':
-            printf("%s ha scelto di creare una nuova partita\n", nome_client);
-            printf("Creazione in corso...\n");
-            crea_partita(client_fd, nome_client);
-            printf("La partita è stata creata con successo!\n");
-            printf("%s è in attesa di un altro giocatore...\n", nome_client);
-            break;
+        printf("%c\n", scelta);
+        switch (scelta)
+        {
+            case 'C':
+            case 'c':
+                printf("%s ha scelto di creare una nuova partita\n", giocatore->nome);
+                printf("Creazione in corso...\n");
+                crea_partita(giocatore);
+                printf("La partita è stata creata con successo!\n");
+                printf("%s è in attesa di un altro giocatore...\n", giocatore->nome);
+                break;
         
-        case 'U':
-        case 'u':
-            printf("%s ha scelto di unirsi ad una partita esistente\n", nome_client);
-            //unisciti_ad_una_partita();
-            break;
+            case 'U':
+            case 'u':
+                printf("%s ha scelto di unirsi ad una partita esistente\n", giocatore->nome);
+                unisci_a_partita(giocatore);
+                break;
 
-        default:
-            invia_messaggi(client_fd, "Scleta non valida");
-            break;
-    }
+            default:
+                invia_messaggi(giocatore->socket, "Scelta non valida\n");
+                break;
+        }
 }

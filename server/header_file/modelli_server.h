@@ -8,7 +8,7 @@
 #include <sys/un.h>
 #include <signal.h>
 #include <pthread.h>
-
+#include <stdatomic.h>
 
 
 #define N 3
@@ -21,9 +21,10 @@
 #define MAX 1024
 
 //variabili globali
- extern pthread_mutex_t lock;
+ //extern pthread_mutex_t lock;
 
-//strutture
+
+ //strutture
 typedef struct 
 {
     int socket;
@@ -43,7 +44,8 @@ typedef struct
     int stato; 
     int turno;
     int risultato;
-    pthread_t thread;
+    pthread_cond_t cond;
+    pthread_mutex_t mutex;
 } Partita;
 
 
@@ -66,10 +68,12 @@ Partita *inizializza_partita(int id_partita, int socket_giocatore, char *nome_gi
 
 //gestione client
 void *gestisci_client(void *arg);
-void gestisci_scelta(int client_fd, char scelta, char *nome_client);
+void gestisci_scelta(Giocatori *giocatore, char scelta);
 
 //gestione del gioco
-void crea_partita(int client_fd, char *nome);
+Partita *crea_partita(Giocatori *giocatore);
+void unisci_a_partita(Giocatori *giocatore);
+void *gestisci_partita(Partita *partita);
 
 //scambio messaggi
 void invia_messaggi(int client_fd, char *msg);
