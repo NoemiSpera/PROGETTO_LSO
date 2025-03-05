@@ -12,6 +12,8 @@ void messaggio_benvenuto()
     stampa_bordo();
 }
 
+
+
 void stampa_bordo()
 {
     for(int i=0; i < LARGHEZZA; i++)
@@ -20,6 +22,8 @@ void stampa_bordo()
     }
     printf("\n");
 }
+
+
 
 void stampa_testo_centrato(const char *testo)
 {

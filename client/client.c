@@ -2,16 +2,11 @@
 #include "header_file/colori.h"
 
 
-#define MAX 1024
-#define MAX_NOME 50
-
-
-
 int main()
 {
     int client_fd;
     char buffer[MAX];
-    char *nome = malloc(MAX_NOME * sizeof(char));
+    char *nome;
     char scelta;
 
 
@@ -28,23 +23,22 @@ int main()
     //richiesta di creazione o patecpazione ad altre partite
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf(UNDERLINE YELLOW "%s" RESET, buffer);
+    printf("Inserisci la tua scelta : ");
     
     while (1)
     {
-        // Invio risposta al server
+        //Invio risposta al server
         scanf(" %c", &scelta);
-        printf("hai inserito: %c\n", scelta);
-
-
+        
+        
         if (scelta == 'Q' || scelta == 'q') {
             printf("Uscendo dal programma...\n");
             break;
         }
 
-
-        char msg[2]={scelta, '\0'};
-        invia_messaggi(client_fd, msg);
-        //send(client_fd, msg, sizeof(msg), 0);
+        char input[2]={scelta, '\0'};
+        invia_messaggi(client_fd, input);
+        
 
         //messaggio partita creata
         ricevi_messaggi(client_fd, buffer, sizeof(buffer));
@@ -52,6 +46,8 @@ int main()
 
     }
    
+
     close(client_fd);
+    free(nome);
     return 0;
 }

@@ -1,15 +1,18 @@
 #include "../header_file/modelli_server.h"
 #include "../header_file/colori.h"
 
-/*variabili globali*/
 
 //mutex
-pthread_mutex_t partite_mutex;
+pthread_mutex_t partite_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+/*variabili globali*/
 
 //gestione partite e giocatori
-Giocatori *giocatore[MAX_COLLEGATI];
+//Giocatori *giocatore[MAX_COLLEGATI];
 Partita *partite[MAX_PARTITE];
 atomic_int num_partite = ATOMIC_VAR_INIT(0);
+
 
 //inizializzazioni
 void inizializza_griglia(char griglia[N][N])
@@ -68,6 +71,8 @@ Partita* inizializza_partita(int id_partita, int socket_giocatore, char *nome_gi
     return nuova_partita;
 }
 
+
+
 Partita *crea_partita(Giocatori *giocatore)
 {
     //protegge l'accesso alla lista globale delle partite
@@ -81,6 +86,7 @@ Partita *crea_partita(Giocatori *giocatore)
         invia_messaggi(giocatore->socket, "Limite massimo di partite raggiunto\n");
         return NULL;
     }
+
 
     // Crea la partita
     Partita *nuova_partita = inizializza_partita(id_partita, giocatore->socket, giocatore->nome);
@@ -104,7 +110,7 @@ Partita *crea_partita(Giocatori *giocatore)
 
     while (nuova_partita->giocatore[1] == NULL)
     {
-        printf("Il giocatore %s ha creato la partita %d ed è in attesa...\n", giocatore->nome, id_partita);
+        printf("%s ha creato la partita %d ed è in attesa di un altro giocatore...\n", giocatore->nome, id_partita);
         //protegge l'accesso alla partita specifica
         pthread_mutex_lock(&nuova_partita->mutex);
         pthread_cond_wait(&nuova_partita->cond, &nuova_partita->mutex);  // Sospendi il thread
@@ -113,11 +119,10 @@ Partita *crea_partita(Giocatori *giocatore)
 
     printf("Il giocatore %s ha ricevuto il segnale ed esce dall'attesa!\n", giocatore->nome);
 
-    pthread_mutex_unlock(&partite_mutex);
-    gestisci_partita(nuova_partita);
-
     return nuova_partita;
 }
+
+
 
 void unisci_a_partita(Giocatori *giocatore)
 {
@@ -125,6 +130,7 @@ void unisci_a_partita(Giocatori *giocatore)
 
     int id_partita = -1;
 
+    //trovar en'altra soluzione
     // Troviamo una partita con solo un giocatore
     for (int i = 0; i < MAX_PARTITE; i++)
     {
@@ -154,7 +160,7 @@ void unisci_a_partita(Giocatori *giocatore)
     }
     partita->giocatore[1] = giocatore2;
 
-    printf("Il giocatore %s si sta unendo alla partita %d...\n", giocatore->nome, giocatore2->id_partita);
+    printf("%s si sta unendo alla partita %d...\n", giocatore->nome, giocatore2->id_partita);
 
     char unione[MAX];
     snprintf(unione, sizeof(unione), "Ti sei unito alla partita %d. Inizia il gioco!\n", id_partita);
@@ -163,31 +169,7 @@ void unisci_a_partita(Giocatori *giocatore)
     invia_messaggi(partita->giocatore[0]->socket, "Il secondo giocatore si è unito! Inizia il gioco!\n");
 
     pthread_cond_signal(&partita->cond);  // Sveglia il primo giocatore
-    printf("Il secondo giocatore ha sbloccato il primo con pthread_cond_signal!\n");
     pthread_mutex_unlock(&partita->mutex);
     pthread_mutex_unlock(&partite_mutex);
-}
 
-void *gestisci_partita(Partita *partita)
-{
-    if (!partita || !partita->giocatore[0] || !partita->giocatore[1])
-    {
-        printf("Errore: Partita %d non valida!\n", partita->id);
-        return NULL;
-    }
-
-    // La partita inizia
-    partita->stato = 1;
-    partita->giocatore[0]->stato = 1; // Il primo giocatore inizia il turno
-    partita->giocatore[1]->stato = 0; // Il secondo aspetta
-
-    printf("Partita %d iniziata tra %s (X) e %s (O)\n", partita->id, partita->giocatore[0]->nome, partita->giocatore[1]->nome);
-
-    // Invia messaggio ai giocatori
-    char msg[256];
-    snprintf(msg, sizeof(msg), "La partita è iniziata! %s (X) inizia per primo.\n", partita->giocatore[0]->nome);
-    invia_messaggi(partita->giocatore[0]->socket, msg);
-    invia_messaggi(partita->giocatore[1]->socket, msg);
-
-    return NULL;
 }

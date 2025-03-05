@@ -9,13 +9,15 @@
 #include <pthread.h>
 #include <termios.h>
 
+#define MAX_NOME 50
+#define MAX 1024
 
 //funzione per la connessione
 int connetti_al_server();
 
 
 //funzioni per la comunicazione 
-void ricevi_messaggi(int client_fd, char* buffer, size_t buf_size);
+ssize_t ricevi_messaggi(int client_fd, char* buffer, size_t buf_size);
 void invia_messaggi(int client_fd, char *msg);
 
 

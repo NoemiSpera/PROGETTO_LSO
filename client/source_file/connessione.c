@@ -3,7 +3,6 @@
 
 
 #define PERCORSO_SOCKET "/tmp/socket_locale"
-#define MAX_BUF 256
 
 
 

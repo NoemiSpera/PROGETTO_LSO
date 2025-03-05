@@ -2,12 +2,6 @@
 #include "../header_file/colori.h"
 
 
-/*variabili globali*/
-
-//mutex
-pthread_mutex_t lock;
-
-
 //gestione client
 void *gestisci_client(void *arg)
 {
@@ -19,7 +13,7 @@ void *gestisci_client(void *arg)
     int indice_gioco=-1;
     char nome[MAX_NOME];
     char buffer[MAX];
-    memset(buffer, 0, sizeof(buffer));
+    
     
     rec = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
     printf("%s ha fatto accesso al server\n", buffer);
@@ -34,21 +28,16 @@ void *gestisci_client(void *arg)
     
     char msg[] = "Vuoi creare una nuova partita(C) o unirti  a una esistente (U)?\n";
     invia_messaggi(client_socket, msg);
-    
-    memset(buffer, 0, sizeof(buffer));
    
     printf("Attendo ricezione del messaggio...\n");
 
     int bytes_ricevuti = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
 
-    printf("Byte ricevuti: %d\n", bytes_ricevuti);
+   
 
     if (bytes_ricevuti > 0) {
-        buffer[bytes_ricevuti] = '\0';  // Assicura una stringa valida
-        printf("Scelta ricevuta: %s\n", buffer);
-        printf("carattere: %c (ASCII: %d)\n", buffer[0], buffer[0]);
-    
         
+        buffer[bytes_ricevuti] = '\0';  // Assicura una stringa valida
         gestisci_scelta(giocatore, buffer[0]);
         
     } else {
@@ -73,8 +62,6 @@ void gestisci_scelta(Giocatori *giocatore, char scelta)
                 printf("%s ha scelto di creare una nuova partita\n", giocatore->nome);
                 printf("Creazione in corso...\n");
                 crea_partita(giocatore);
-                printf("La partita è stata creata con successo!\n");
-                printf("%s è in attesa di un altro giocatore...\n", giocatore->nome);
                 break;
         
             case 'U':

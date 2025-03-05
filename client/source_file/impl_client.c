@@ -1,27 +1,31 @@
 #include "../header_file/modelli_client.h"
 #include "../header_file/colori.h"
-
-
-#define MAX_NOME 50 
+ 
 
 //scambio messaggi
-void ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
+ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
 {
     ssize_t n;
     
     memset(buffer, 0, buf_size); // Puliamo il buffer
     n = recv(client_fd, buffer, buf_size - 1, 0);
-    if(n == -1)
+    if (n == 0) 
     {
-        perror("Errore nella ricezione del messaggio");
-        close(client_fd);
-        exit(1);
+        // Connessione chiusa dal server
+        printf("Connessione chiusa dal server.\n");
+        return 0;  // Ritorna 0 per segnalare la chiusura
     }
-    if (n > 0) 
+    else if (n < 0) 
+    {
+        // Errore nella ricezione
+        perror("Errore nella ricezione del messaggio");
+        return -1;  // Ritorna -1 per segnalare l'errore
+    } 
+    else
     {
         buffer[n] = '\0';
+        return n;
     }
-    
 }
 
 
@@ -46,7 +50,7 @@ char *inserisci_nome()
     nascondi_input();
     scanf("%s",nome);
     ripristina_input();
-    printf("\r\033[K\r\033[K");
+    printf("\r\033[K");
 
     return nome;
 }

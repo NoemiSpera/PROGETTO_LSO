@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <signal.h>
 #include <pthread.h>
@@ -16,12 +15,8 @@
 #define MAX_GIOCATORI 2
 #define MAX_PARTITE 100
 #define MAX_COLLEGATI 100
-#define MAX_LOGICA 100
 #define LARGHEZZA 60
 #define MAX 1024
-
-//variabili globali
- //extern pthread_mutex_t lock;
 
 
  //strutture
@@ -60,6 +55,12 @@ void stampa_bordo();
 void stampa_testo_centrato(const char *testo);
 void messaggio_benvenuto();
 
+
+//scambio messaggi
+void invia_messaggi(int client_fd, char *msg);
+ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
+
+
 //inizializzazioni
 void inizializza_griglia(char griglia[N][N]);
 Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
@@ -73,10 +74,4 @@ void gestisci_scelta(Giocatori *giocatore, char scelta);
 //gestione del gioco
 Partita *crea_partita(Giocatori *giocatore);
 void unisci_a_partita(Giocatori *giocatore);
-void *gestisci_partita(Partita *partita);
-
-//scambio messaggi
-void invia_messaggi(int client_fd, char *msg);
-ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
-
 

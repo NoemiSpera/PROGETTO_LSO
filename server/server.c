@@ -10,8 +10,6 @@ int main()
 {
     int server_socket;
     
-    pthread_mutex_init(&lock, NULL);
-    
     creazione_socket(&server_socket);
 
     messaggio_benvenuto();
@@ -19,7 +17,7 @@ int main()
     accetta_connessioni(server_socket);
 
     
-    pthread_mutex_destroy(&lock);
-    
+   
+    close(server_socket);
     return 0;
 }
