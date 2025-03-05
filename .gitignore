@@ -1,3 +1,5 @@
-#visual studio settings
+#VScode
 .vscode/
 
+#File oggetto
+*.o
