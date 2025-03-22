@@ -16,13 +16,14 @@ void *gestisci_client(void *arg)
     
     
     rec = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
-    printf("%s ha fatto accesso al server\n", buffer);
+    printf("%s%s ha fatto accesso al server%s\n",CYAN, buffer, RESET);
     strcpy(nome,buffer);
 
     Giocatori *giocatore = inizializza_giocatore(client_socket,-1,buffer, "-1");
 
     char benvenuto[256];
-    snprintf(benvenuto, sizeof(benvenuto), "Ciao %.200s, benvenuto nel server!", buffer);
+    snprintf(benvenuto, sizeof(benvenuto), "%s%sCiao %.200s, benvenuto nel server!%s", CYAN, BOLD, buffer, RESET);
+
     invia_messaggi(client_socket, benvenuto);
     usleep(500000);
     
@@ -54,20 +55,19 @@ void *gestisci_client(void *arg)
 
 void gestisci_scelta(Giocatori *giocatore, char scelta)
 {
-        printf("%c\n", scelta);
         switch (scelta)
         {
             case 'C':
             case 'c':
                 printf("%s ha scelto di creare una nuova partita\n", giocatore->nome);
                 printf("Creazione in corso...\n");
-                crea_partita(giocatore);
+                gestisci_creazione_partita(giocatore);
                 break;
         
             case 'U':
             case 'u':
                 printf("%s ha scelto di unirsi ad una partita esistente\n", giocatore->nome);
-                unisci_a_partita(giocatore);
+                gestisci_ingresso_partita(giocatore);
                 break;
 
             default:

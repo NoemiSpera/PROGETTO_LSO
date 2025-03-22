@@ -46,7 +46,7 @@ void invia_messaggi(int client_fd, char *msg)
 char *inserisci_nome()
 {
     char *nome=malloc(MAX_NOME * sizeof(char));
-    printf("Inserisci il tuo nome: ");
+    printf(LIGHT_GREEN "Inserisci il tuo nome: " RESET);
     nascondi_input();
     scanf("%s",nome);
     ripristina_input();

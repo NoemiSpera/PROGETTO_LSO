@@ -20,10 +20,10 @@ int main()
     printf("%s\n", buffer);
 
 
-    //richiesta di creazione o patecpazione ad altre partite
+    //richiesta di creazione o partecpazione ad altre partite
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
-    printf(UNDERLINE YELLOW "%s" RESET, buffer);
-    printf("Inserisci la tua scelta : ");
+    printf(YELLOW "%s" RESET, buffer);
+    printf(GREEN "Inserisci la tua scelta : " RESET);
     
     while (1)
     {
@@ -42,7 +42,7 @@ int main()
 
         //messaggio partita creata
         ricevi_messaggi(client_fd, buffer, sizeof(buffer));
-        printf("%s", buffer);
+        printf(YELLOW BOLD "%s" RESET, buffer);
 
     }
    

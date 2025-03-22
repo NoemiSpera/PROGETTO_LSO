@@ -65,6 +65,11 @@ ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
 void inizializza_griglia(char griglia[N][N]);
 Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
 Partita *inizializza_partita(int id_partita, int socket_giocatore, char *nome_giocatore);
+int generazione_id(Giocatori *giocatore);
+Partita *genera_partita(int id_partita, Giocatori *giocatore);
+void attendi_giocatore(int id_partita, Partita* partita, Giocatori *giocatore);
+Partita *cerca_partita_disponibile(Giocatori *giocatore);
+void unisci_a_partita(Partita *partita, Giocatori *giocatore);
 
 
 //gestione client
@@ -72,6 +77,6 @@ void *gestisci_client(void *arg);
 void gestisci_scelta(Giocatori *giocatore, char scelta);
 
 //gestione del gioco
-Partita *crea_partita(Giocatori *giocatore);
-void unisci_a_partita(Giocatori *giocatore);
+Partita *gestisci_creazione_partita(Giocatori *giocatore);
+void gestisci_ingresso_partita(Giocatori *giocatore);
 
