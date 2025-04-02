@@ -61,13 +61,16 @@ int main()
             
             // Ricevi la griglia iniziale
             ricevi_messaggi(client_fd, buffer, sizeof(buffer));
-            ricevi_messaggi(client_fd, buffer_griglia, sizeof(buffer_griglia));
+            printf("%s\n", buffer);
+            
 
            
           
             if (strncmp(buffer, "TUO_TURNO", 9) == 0)
             {
+                printf("prova\n");
                 printf("=== Griglia di Gioco ===\n");
+                ricevi_messaggi(client_fd, buffer_griglia, sizeof(buffer_griglia));
                 printf("%s\n", buffer_griglia);
                 printf("È IL TUO TURNO!\n");
 
@@ -85,14 +88,20 @@ int main()
             else if (strncmp(buffer, "ATTENDI", 7) == 0)
             {
                 printf("=== Griglia di Gioco ===\n");
+                ricevi_messaggi(client_fd, buffer_griglia, sizeof(buffer_griglia));
                 printf("%s\n", buffer_griglia);
                 printf("ATTENDI IL TUO TURNO...\n");
 
             }
             else if (strncmp(buffer, "FINE_PARTITA", 12) == 0)
             {
+                ricevi_messaggi(client_fd, buffer_griglia, sizeof(buffer_griglia));
                 printf("Partita terminata!\n");
                 printf("%s\n", buffer_griglia);
+                break;
+            }
+            else{
+                printf("sono nell'else\n");
                 break;
             }
 

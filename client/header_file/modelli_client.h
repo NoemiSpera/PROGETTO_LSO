@@ -29,3 +29,6 @@ void ripristina_input();
 char *inserisci_nome();
 
 
+void formato_griglia(char *buffer, char grid[N]);
+
+

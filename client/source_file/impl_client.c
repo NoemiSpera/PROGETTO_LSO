@@ -82,3 +82,13 @@ void ripristina_input() {
 }
 
 
+void formato_griglia(char *buffer, char grid[N]) {
+    sprintf(buffer, 
+        "%c | %c | %c\n"
+        "---------\n"
+        "%c | %c | %c\n"
+        "---------\n"
+        "%c | %c | %c\n",
+        grid[0], grid[1], grid[2], grid[3], grid[4], grid[5], grid[6], grid[7], grid[8]);
+
+}

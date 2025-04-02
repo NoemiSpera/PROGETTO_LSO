@@ -226,9 +226,6 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
     pthread_mutex_unlock(&partite_mutex);   
 }
 
-
-
-
 void formato_griglia(char *buffer, char grid[N]) {
     sprintf(buffer, 
         "%c | %c | %c\n"
@@ -241,46 +238,29 @@ void formato_griglia(char *buffer, char grid[N]) {
 }
 
 
-int ricevi_mossa(Giocatori *g)
-{
-    int mossa;
-    
-        if(recv(g->socket,&mossa, sizeof(mossa),0) <=0)
-        {
-            printf("Errore nella ricezione della mossa\n");
-            return -1;
-        }
-        return ntohl(mossa);
-}
-
-
 void *gestisci_gioco(void *arg)
 {
     Partita *p = (Partita *) arg;
     char buffer_griglia[MAX];
     char messaggio[MAX];
 
-    while(1)
+    while(p->stato == 0)
     {
         pthread_mutex_lock(&p->mutex);
-        if(p->stato == 1)
-        {
-            pthread_mutex_unlock(&p->mutex);
-            break;
-        }
 
         int turno = p->turno;
         int avversario = (turno +1) %2;
        
         //printf("La partita con id %d è iniziata tra %s e %s\n", p->id, p->giocatore[0]->nome,p->giocatore[1]->nome);
         //printf("è il turno di %s\n",g_attivo->nome);
-
         formato_griglia(buffer_griglia, p->griglia);
         
         invia_messaggi(p->giocatore[turno]->socket, "TUO_TURNO\n");
+        sleep(1);
         invia_messaggi(p->giocatore[turno]->socket, buffer_griglia);
         
         invia_messaggi(p->giocatore[avversario]->socket, "ATTENDI\n"); 
+        sleep(1);
         invia_messaggi(p->giocatore[avversario]->socket, buffer_griglia);
     
 
