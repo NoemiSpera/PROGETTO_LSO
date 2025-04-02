@@ -10,6 +10,7 @@
 #define YELLOW      "\033[93m"
 #define GREEN       "\033[32m"
 #define CYAN        "\033[36m"
+#define ORANGE      "\033[33m"
 #define MAGENTA     "\033[35m"
 #define LIGHT_GREEN "\033[92m"
 

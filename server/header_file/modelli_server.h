@@ -8,9 +8,10 @@
 #include <signal.h>
 #include <pthread.h>
 #include <stdatomic.h>
+#include <arpa/inet.h> 
 
 
-#define N 3
+#define N 9
 #define MAX_NOME 50
 #define MAX_GIOCATORI 2
 #define MAX_PARTITE 100
@@ -35,8 +36,8 @@ typedef struct
 {
     int id;
     Giocatori *giocatore[MAX_GIOCATORI];
-    char griglia[N][N];
-    int stato; 
+    char griglia[N];
+    int stato;                    /* 1 = "terminata"  |  0 = "in corso" |  -1 = creata */
     int turno;
     int risultato;
     pthread_cond_t cond;
@@ -56,13 +57,15 @@ void stampa_testo_centrato(const char *testo);
 void messaggio_benvenuto();
 
 
+
 //scambio messaggi
 void invia_messaggi(int client_fd, char *msg);
 ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
 
 
+
 //inizializzazioni
-void inizializza_griglia(char griglia[N][N]);
+void inizializza_griglia(char griglia[N]);
 Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
 Partita *inizializza_partita(int id_partita, int socket_giocatore, char *nome_giocatore);
 int generazione_id(Giocatori *giocatore);
@@ -74,9 +77,12 @@ void unisci_a_partita(Partita *partita, Giocatori *giocatore);
 
 //gestione client
 void *gestisci_client(void *arg);
+void *gestisci_gioco(void *arg);
 void gestisci_scelta(Giocatori *giocatore, char scelta);
 
 //gestione del gioco
 Partita *gestisci_creazione_partita(Giocatori *giocatore);
 void gestisci_ingresso_partita(Giocatori *giocatore);
-
+int ricevi_mossa(Giocatori *g);
+void formato_griglia(char *buffer, char grid[N]);
+int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore);

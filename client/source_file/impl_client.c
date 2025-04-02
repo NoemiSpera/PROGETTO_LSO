@@ -6,7 +6,6 @@
 ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
 {
     ssize_t n;
-    
     memset(buffer, 0, buf_size); // Puliamo il buffer
     n = recv(client_fd, buffer, buf_size - 1, 0);
     if (n == 0) 
@@ -18,7 +17,7 @@ ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
     else if (n < 0) 
     {
         // Errore nella ricezione
-        perror("Errore nella ricezione del messaggio");
+        perror("Errore nella ricezione del messaggio\n");
         return -1;  // Ritorna -1 per segnalare l'errore
     } 
     else
@@ -81,3 +80,5 @@ void ripristina_input() {
     old_attr.c_lflag |= ECHO;  // Riabilita l'eco
     tcsetattr(STDIN_FILENO, TCSANOW, &old_attr);
 }
+
+

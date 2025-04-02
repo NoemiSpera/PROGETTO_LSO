@@ -8,9 +8,11 @@
 #include <signal.h>
 #include <pthread.h>
 #include <termios.h>
+#include <arpa/inet.h> 
 
 #define MAX_NOME 50
 #define MAX 1024
+#define N 9
 
 //funzione per la connessione
 int connetti_al_server();
@@ -25,3 +27,5 @@ void invia_messaggi(int client_fd, char *msg);
 void nascondi_input();
 void ripristina_input();
 char *inserisci_nome();
+
+

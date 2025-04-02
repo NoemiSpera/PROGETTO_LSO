@@ -15,15 +15,10 @@ atomic_int num_partite = ATOMIC_VAR_INIT(0);
 
 
 //inizializzazioni
-void inizializza_griglia(char griglia[N][N])
+void inizializza_griglia(char griglia[N])
 {
-    for(int i = 0; i < N; i++)
-    {
-        for(int j = 0; j < N; j++)
-        {
-            griglia[i][j] = '-';
-        }
-    }
+    for (int i = 0; i < 9; i++) 
+        griglia[i] = '1' + i; 
 }
 
 
@@ -68,8 +63,8 @@ Partita* inizializza_partita(int id_partita, int socket_giocatore, char *nome_gi
 
     inizializza_griglia(nuova_partita->griglia);
 
-    nuova_partita->stato = 0;                  // 0 = nuova creazione
-    nuova_partita->turno = 0;                  // 0 = non è il tuo turno
+    nuova_partita->stato = -1;                  // 0 = nuova creazione
+    nuova_partita->turno = 0;                  // 0 = turno primo giocatore | 1 = turno secondo giocatore
     nuova_partita->risultato = -1;             // -1 = ancora nessun risultato
 
     return nuova_partita;
@@ -128,8 +123,6 @@ void attendi_giocatore(int id_partita, Partita* partita, Giocatori *giocatore)
     }
     pthread_mutex_unlock(&partita->mutex);
 
-    printf("Il giocatore %s ha ricevuto il segnale ed esce dall'attesa!\n", giocatore->nome);
-
 }
 
 
@@ -143,10 +136,12 @@ Partita *gestisci_creazione_partita(Giocatori *giocatore)
 
     Partita* nuova_partita = genera_partita(id_partita,giocatore);
 
-    //invio messaggio al client 
-    char msg[MAX];
+    inizializza_griglia(nuova_partita->griglia);
+
+   
+    /*char msg[MAX];
     snprintf(msg, sizeof(msg), "Partita creata con ID %d. In attesa di un altro giocatore...\n", id_partita);
-    invia_messaggi(giocatore->socket, msg);
+    invia_messaggi(giocatore->socket, msg);*/
 
     pthread_mutex_unlock(&partite_mutex);
 
@@ -196,6 +191,7 @@ void unisci_a_partita(Partita *partita, Giocatori *giocatore)
         return;
     }
     partita->giocatore[1] = giocatore2;
+    partita->stato = 0;
 
     printf("%s si sta unendo alla partita %d...\n", giocatore->nome, giocatore2->id_partita);
 }
@@ -211,13 +207,110 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
     pthread_mutex_lock(&partita->mutex);
 
     unisci_a_partita(partita,giocatore);
-   
+
     char msg[MAX];
     snprintf(msg, sizeof(msg), "Ti sei unito alla partita %d. Inizia il gioco!\n", partita->id);
     invia_messaggi(giocatore->socket, msg);
     invia_messaggi(partita->giocatore[0]->socket, "Il secondo giocatore si è unito! Inizia il gioco!\n");
 
+    if (partita->giocatore[0] != NULL && partita->giocatore[1] != NULL)
+    {
+
+        pthread_t thread_partita;
+        pthread_create(&thread_partita, NULL, gestisci_gioco, (void *)partita);
+        pthread_detach(thread_partita);
+    }
+
     pthread_cond_signal(&partita->cond);  // Sveglia il primo giocatore
     pthread_mutex_unlock(&partita->mutex);
     pthread_mutex_unlock(&partite_mutex);   
+}
+
+
+
+
+void formato_griglia(char *buffer, char grid[N]) {
+    sprintf(buffer, 
+        "%c | %c | %c\n"
+        "---------\n"
+        "%c | %c | %c\n"
+        "---------\n"
+        "%c | %c | %c\n",
+        grid[0], grid[1], grid[2], grid[3], grid[4], grid[5], grid[6], grid[7], grid[8]);
+
+}
+
+
+int ricevi_mossa(Giocatori *g)
+{
+    int mossa;
+    
+        if(recv(g->socket,&mossa, sizeof(mossa),0) <=0)
+        {
+            printf("Errore nella ricezione della mossa\n");
+            return -1;
+        }
+        return ntohl(mossa);
+}
+
+
+void *gestisci_gioco(void *arg)
+{
+    Partita *p = (Partita *) arg;
+    char buffer_griglia[MAX];
+    char messaggio[MAX];
+
+    while(1)
+    {
+        pthread_mutex_lock(&p->mutex);
+        if(p->stato == 1)
+        {
+            pthread_mutex_unlock(&p->mutex);
+            break;
+        }
+
+        int turno = p->turno;
+        int avversario = (turno +1) %2;
+       
+        //printf("La partita con id %d è iniziata tra %s e %s\n", p->id, p->giocatore[0]->nome,p->giocatore[1]->nome);
+        //printf("è il turno di %s\n",g_attivo->nome);
+
+        formato_griglia(buffer_griglia, p->griglia);
+        
+        invia_messaggi(p->giocatore[turno]->socket, "TUO_TURNO\n");
+        invia_messaggi(p->giocatore[turno]->socket, buffer_griglia);
+        
+        invia_messaggi(p->giocatore[avversario]->socket, "ATTENDI\n"); 
+        invia_messaggi(p->giocatore[avversario]->socket, buffer_griglia);
+    
+
+        ricevi_messaggi(p->giocatore[turno]->socket, messaggio, sizeof(messaggio));
+        int mossa=atoi(messaggio);
+        printf("La mossa ricevuta è %d\n",mossa);
+
+        p->turno = avversario;
+        pthread_mutex_unlock(&p->mutex);
+        
+    }
+
+    return NULL;
+}
+
+int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore) {
+    // Verifica che la mossa sia un numero valido (da 1 a 9)
+    if (mossa < 1 || mossa > 9) {
+        printf("Mossa non valida: deve essere un numero tra 1 e 9.\n");
+        return 1;
+    }
+
+    // Verifica che la casella selezionata sia libera
+    if (partita->griglia[mossa - 1] != (mossa + '0')) {
+        printf("La casella %d è già occupata.\n", mossa);
+        return 1;
+    }
+
+    // Se la mossa è valida, aggiorna la griglia con il simbolo del giocatore
+    partita->griglia[mossa - 1] = (giocatore->simbolo == 0) ? 'O' : 'X';
+
+    return 0 ;
 }
