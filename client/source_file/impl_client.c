@@ -82,13 +82,69 @@ void ripristina_input() {
 }
 
 
-void formato_griglia(char *buffer, char grid[N]) {
-    sprintf(buffer, 
-        "%c | %c | %c\n"
-        "---------\n"
-        "%c | %c | %c\n"
-        "---------\n"
-        "%c | %c | %c\n",
-        grid[0], grid[1], grid[2], grid[3], grid[4], grid[5], grid[6], grid[7], grid[8]);
 
+
+void stampa_griglia(char griglia[N]) {
+    // Stampa la griglia in un formato simile a una tabella
+    printf("%c | %c | %c\n", griglia[0], griglia[1], griglia[2]);
+    printf("---------\n");
+    printf("%c | %c | %c\n", griglia[3], griglia[4], griglia[5]);
+    printf("---------\n");
+    printf("%c | %c | %c\n", griglia[6], griglia[7], griglia[8]);
+}
+
+
+
+void gestisci_partita(int client_fd) {
+    char buffer[MAX];   
+    char buffer_griglia[N];    
+    int mossa;
+
+
+    while (1)
+        {   
+           // Giocatore due si è unito
+            ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+            printf("%s\n", buffer);
+            
+            // Ricevi la griglia iniziale
+            ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+
+            ricevi_messaggi(client_fd,buffer_griglia,sizeof(buffer_griglia));
+            printf("=== Griglia di Gioco ===\n");
+            stampa_griglia(buffer_griglia);
+
+            
+            
+            if (strncmp(buffer, "TUO_TURNO", 9) == 0)
+            {
+                printf("È IL TUO TURNO!\n");
+            
+                do {
+                    printf("Scegli una mossa (1-9): ");
+                    scanf("%d", &mossa);
+                } while (mossa < 1 || mossa > 9);
+        
+
+                char risposta[10];
+                sprintf(risposta, "%d", mossa);
+                invia_messaggi(client_fd, risposta);
+            }
+            else if (strncmp(buffer, "ATTENDI", 7) == 0)
+            {
+                printf("ATTENDI IL TUO TURNO...\n");
+                
+            }
+            else if (strncmp(buffer, "PARTITA_VINTA", 12) == 0)
+            {
+                printf("Partita terminata!\n");
+                break;
+            }
+            else{
+        
+                break;
+            }
+
+            
+        }
 }

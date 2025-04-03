@@ -27,7 +27,7 @@ typedef struct
     char nome[MAX_NOME];
     int id_partita;
     int stato;                  /* 0 = "non è il suo turno" | 1 = "è il suo turno" */
-    int simbolo;                /* 0 = "O" | 1 = "X" | -1 = "nessun simbolo assegnato" */
+    char simbolo[10];                /* 0 = "O" | 1 = "X" */
 } Giocatori;
 
 
@@ -84,5 +84,6 @@ void gestisci_scelta(Giocatori *giocatore, char scelta);
 Partita *gestisci_creazione_partita(Giocatori *giocatore);
 void gestisci_ingresso_partita(Giocatori *giocatore);
 int ricevi_mossa(Giocatori *g);
-void formato_griglia(char *buffer, char grid[N]);
-int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore);
+int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbolo);
+int controlla_vittoria(char g[N], char *simbolo);
+int controlla_pareggio(char g[N]);

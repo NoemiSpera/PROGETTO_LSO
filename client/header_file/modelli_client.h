@@ -12,7 +12,7 @@
 
 #define MAX_NOME 50
 #define MAX 1024
-#define N 9
+#define N 20
 
 //funzione per la connessione
 int connetti_al_server();
@@ -29,6 +29,7 @@ void ripristina_input();
 char *inserisci_nome();
 
 
-void formato_griglia(char *buffer, char grid[N]);
+void stampa_griglia(char griglia[N]);
+void gestisci_partita(int client_fd);
 
 

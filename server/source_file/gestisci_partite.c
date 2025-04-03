@@ -32,7 +32,7 @@ Giocatori *inizializza_giocatore(int socket, int id_partita, char* nome, char *s
     strncpy(giocatore->nome, nome, MAX_NOME);
     giocatore->id_partita = id_partita;
     giocatore->stato = 0;
-    giocatore->simbolo = -1;
+    strcpy(giocatore->simbolo, simbolo);
 
     return giocatore;
 }
@@ -215,7 +215,6 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
 
     if (partita->giocatore[0] != NULL && partita->giocatore[1] != NULL)
     {
-
         pthread_t thread_partita;
         pthread_create(&thread_partita, NULL, gestisci_gioco, (void *)partita);
         pthread_detach(thread_partita);
@@ -226,16 +225,6 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
     pthread_mutex_unlock(&partite_mutex);   
 }
 
-void formato_griglia(char *buffer, char grid[N]) {
-    sprintf(buffer, 
-        "%c | %c | %c\n"
-        "---------\n"
-        "%c | %c | %c\n"
-        "---------\n"
-        "%c | %c | %c\n",
-        grid[0], grid[1], grid[2], grid[3], grid[4], grid[5], grid[6], grid[7], grid[8]);
-
-}
 
 
 void *gestisci_gioco(void *arg)
@@ -244,31 +233,75 @@ void *gestisci_gioco(void *arg)
     char buffer_griglia[MAX];
     char messaggio[MAX];
 
+    printf("La partita con id %d è iniziata tra %s e %s\n", p->id, p->giocatore[0]->nome,p->giocatore[1]->nome);
+
     while(p->stato == 0)
     {
-        pthread_mutex_lock(&p->mutex);
-
+        
         int turno = p->turno;
         int avversario = (turno +1) %2;
        
-        //printf("La partita con id %d è iniziata tra %s e %s\n", p->id, p->giocatore[0]->nome,p->giocatore[1]->nome);
-        //printf("è il turno di %s\n",g_attivo->nome);
-        formato_griglia(buffer_griglia, p->griglia);
+        
+        printf("è il turno di %s\n",p->giocatore[turno]->nome);
+
+        //formato_griglia(buffer_griglia, p->griglia);
         
         invia_messaggi(p->giocatore[turno]->socket, "TUO_TURNO\n");
-        sleep(1);
-        invia_messaggi(p->giocatore[turno]->socket, buffer_griglia);
+        usleep(1);
+        invia_messaggi(p->giocatore[turno]->socket, p->griglia);
         
         invia_messaggi(p->giocatore[avversario]->socket, "ATTENDI\n"); 
-        sleep(1);
-        invia_messaggi(p->giocatore[avversario]->socket, buffer_griglia);
+        usleep(1);
+        invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
+       
     
 
         ricevi_messaggi(p->giocatore[turno]->socket, messaggio, sizeof(messaggio));
         int mossa=atoi(messaggio);
-        printf("La mossa ricevuta è %d\n",mossa);
 
-        p->turno = avversario;
+        //protegge la modifica della griglia
+        pthread_mutex_lock(&p->mutex);
+
+        if(mossa_valida(p,mossa,p->giocatore[turno],p->giocatore[turno]->simbolo))
+        {
+            if (controlla_vittoria(p->griglia, p->giocatore[turno]->simbolo))
+            {
+                p->stato = 1; // Partita terminata
+
+                //1 da ricevere
+                invia_messaggi(p->giocatore[turno]->socket, "PARTITA_VINTA!\n");
+                sleep(1);
+                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+                invia_messaggi(p->giocatore[avversario]->socket, "PARTITA_PERSA!\n");
+                sleep(1);
+                invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
+
+                pthread_mutex_unlock(&p->mutex);
+                break; // Esce dal ciclo
+            }
+            
+            if(controlla_pareggio(p->griglia))
+            {
+                p->stato = 1;
+
+                invia_messaggi(p->giocatore[turno]->socket, "PAREGGIO!\n");
+                sleep(1);
+                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+                invia_messaggi(p->giocatore[avversario]->socket, "PAREGGIO!\n");
+                sleep(1);
+                invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
+
+                pthread_mutex_unlock(&p->mutex);
+                break; // Esce dal ciclo  
+            }
+
+            p->turno = avversario;
+        }else
+        {
+            invia_messaggi(p->giocatore[turno]->socket, "MOSSA NON VALIDA\n");
+        }
+
+       
         pthread_mutex_unlock(&p->mutex);
         
     }
@@ -276,21 +309,53 @@ void *gestisci_gioco(void *arg)
     return NULL;
 }
 
-int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore) {
-    // Verifica che la mossa sia un numero valido (da 1 a 9)
-    if (mossa < 1 || mossa > 9) {
-        printf("Mossa non valida: deve essere un numero tra 1 e 9.\n");
+
+
+int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbolo) 
+{
+    int indice = mossa -1;
+
+    if (partita->griglia[indice] == 'X' || partita->griglia[indice] == 'O') 
+    {  
+        printf("Mossa non valida: la cella è già occupata.\n");
+        return 0;
+    }
+    
+    partita->griglia[indice] = *simbolo;  
+    return 1;
+}
+
+
+
+int controlla_vittoria(char g[N], char *simbolo) {
+    // Controlla righe
+    for (int i = 0; i < 9; i += 3) {
+        if (g[i] == *simbolo && g[i + 1] == *simbolo && g[i + 2] == *simbolo)
+            return 1;
+    }
+
+    // Controlla colonne
+    for (int i = 0; i < 3; i++) {
+        if (g[i] == *simbolo && g[i + 3] == *simbolo && g[i + 6] == *simbolo)
+            return 1;
+    }
+
+    // Controlla diagonali
+    if ((g[0] == *simbolo && g[4] == *simbolo && g[8] == *simbolo) ||
+        (g[2] == *simbolo && g[4] == *simbolo && g[6] == *simbolo)) {
         return 1;
     }
 
-    // Verifica che la casella selezionata sia libera
-    if (partita->griglia[mossa - 1] != (mossa + '0')) {
-        printf("La casella %d è già occupata.\n", mossa);
-        return 1;
+    return 0; // Nessuna vittoria trovata
+}
+
+
+
+int controlla_pareggio(char g[N]) {
+    for (int i = 0; i < N; i++) {
+        if (g[i] != 'X' && g[i] != 'O') {
+            return 0; // C'è almeno una cella libera → Non è un pareggio
+        }
     }
-
-    // Se la mossa è valida, aggiorna la griglia con il simbolo del giocatore
-    partita->griglia[mossa - 1] = (giocatore->simbolo == 0) ? 'O' : 'X';
-
-    return 0 ;
+    return 1; // Nessuna cella libera → È un pareggio
 }
