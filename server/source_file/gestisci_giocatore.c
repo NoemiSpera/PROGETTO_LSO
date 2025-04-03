@@ -5,7 +5,6 @@
 //gestione client
 void *gestisci_client(void *arg)
 {
-    
     int client_socket = *(int*)arg;
     free(arg);
 
@@ -13,7 +12,6 @@ void *gestisci_client(void *arg)
     int indice_gioco=-1;
     char nome[MAX_NOME];
     char buffer[MAX];
-    
     
     rec = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
     printf("%s%s ha fatto accesso al server%s\n",CYAN, buffer, RESET);
@@ -34,14 +32,14 @@ void *gestisci_client(void *arg)
 
     int bytes_ricevuti = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
 
-   
-
-    if (bytes_ricevuti > 0) {
+   if (bytes_ricevuti > 0) {
         
         buffer[bytes_ricevuti] = '\0';  // Assicura una stringa valida
         gestisci_scelta(giocatore, buffer[0]);
         
-    } else {
+    } 
+    else {
+        
         printf("Errore nel ricevere la scelta\n");
         free(giocatore);
         close(client_socket);

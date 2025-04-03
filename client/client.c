@@ -41,6 +41,7 @@ int main()
         char input[2]={scelta, '\0'};
         invia_messaggi(client_fd, input);
         
+     
         gestisci_partita(client_fd);
         //messaggio partita creata
          //invio messaggio al client il problema è che dovrebbero essere inviati 2 messaggi

@@ -8,20 +8,17 @@ ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
     ssize_t n;
     memset(buffer, 0, buf_size); // Puliamo il buffer
     n = recv(client_fd, buffer, buf_size - 1, 0);
-    if (n == 0) 
-    {
+    if (n == 0) {
+
         // Connessione chiusa dal server
         printf("Connessione chiusa dal server.\n");
         return 0;  // Ritorna 0 per segnalare la chiusura
     }
-    else if (n < 0) 
-    {
+    else if (n < 0) {
         // Errore nella ricezione
         perror("Errore nella ricezione del messaggio\n");
         return -1;  // Ritorna -1 per segnalare l'errore
-    } 
-    else
-    {
+    } else {
         buffer[n] = '\0';
         return n;
     }
@@ -56,7 +53,8 @@ char *inserisci_nome()
 
 
 
-void nascondi_input() {
+void nascondi_input() 
+{
     struct termios new_attr, old_attr;
     
     // Ottieni i settings attuali della terminale
@@ -72,7 +70,8 @@ void nascondi_input() {
 
 
 
-void ripristina_input() {
+void ripristina_input() 
+{
     struct termios old_attr;
     
     // Ripristina i settings originali della terminale
@@ -84,7 +83,8 @@ void ripristina_input() {
 
 
 
-void stampa_griglia(char griglia[N]) {
+void stampa_griglia(char griglia[N]) 
+{
     // Stampa la griglia in un formato simile a una tabella
     printf("%c | %c | %c\n", griglia[0], griglia[1], griglia[2]);
     printf("---------\n");
@@ -95,56 +95,68 @@ void stampa_griglia(char griglia[N]) {
 
 
 
-void gestisci_partita(int client_fd) {
+void gestisci_partita(int client_fd) 
+{
     char buffer[MAX];   
     char buffer_griglia[N];    
     int mossa;
 
+    // Giocatore due si è unito
+    ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+    printf("%s\n", buffer);
 
     while (1)
-        {   
-           // Giocatore due si è unito
-            ricevi_messaggi(client_fd, buffer, sizeof(buffer));
-            printf("%s\n", buffer);
-            
-            // Ricevi la griglia iniziale
-            ricevi_messaggi(client_fd, buffer, sizeof(buffer));
+    {   
+        // turno
+        ricevi_messaggi(client_fd, buffer, sizeof(buffer));
 
-            ricevi_messaggi(client_fd,buffer_griglia,sizeof(buffer_griglia));
-            printf("=== Griglia di Gioco ===\n");
-            stampa_griglia(buffer_griglia);
-
-            
-            
-            if (strncmp(buffer, "TUO_TURNO", 9) == 0)
-            {
-                printf("È IL TUO TURNO!\n");
-            
-                do {
-                    printf("Scegli una mossa (1-9): ");
-                    scanf("%d", &mossa);
-                } while (mossa < 1 || mossa > 9);
+        //griglia
+        ricevi_messaggi(client_fd,buffer_griglia,sizeof(buffer_griglia));
+        printf("=== Griglia di Gioco ===\n");
+        stampa_griglia(buffer_griglia);
         
 
-                char risposta[10];
-                sprintf(risposta, "%d", mossa);
-                invia_messaggi(client_fd, risposta);
-            }
-            else if (strncmp(buffer, "ATTENDI", 7) == 0)
-            {
-                printf("ATTENDI IL TUO TURNO...\n");
-                
-            }
-            else if (strncmp(buffer, "PARTITA_VINTA", 12) == 0)
-            {
-                printf("Partita terminata!\n");
-                break;
-            }
-            else{
-        
-                break;
-            }
+        if (strncmp(buffer, "TUO_TURNO", 9) == 0)
+        {
+            printf("È IL TUO TURNO!\n");
 
-            
+            do
+            {
+                printf("Scegli una mossa (1-9): ");
+                scanf("%d", &mossa);
+            } while (mossa < 1 || mossa > 9);
+
+            char risposta[10];
+            sprintf(risposta, "%d", mossa);
+            invia_messaggi(client_fd, risposta);
         }
+        else if (strncmp(buffer, "ATTENDI", 7) == 0)
+        {
+            printf("ATTENDI IL TUO TURNO...\n");
+        }
+        else if (strncmp(buffer, "PARTITA_VINTA", 12) == 0)
+        {
+            printf("Hai vinto!\n");
+            break;
+        }
+        else if (strncmp(buffer, "PARTITA_PERSA", 13) == 0)
+        {
+            printf("Hai perso!\n");
+            break;
+        }
+        else if (strncmp(buffer, "PAREGGIO", 8) == 0)
+        {
+            printf("La partita è finita in pareggio!\n");
+            break;
+        }
+        else if (strncmp(buffer, "MOSSA_NON_VALIDA", 16) == 0)
+        {
+            printf("Mossa non valida, riprova.\n");
+        }
+        else
+        {
+            printf("Errore: messaggio sconosciuto ricevuto: %s\n", buffer);
+            break;
+        }
+    }
 }

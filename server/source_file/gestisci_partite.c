@@ -230,32 +230,25 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
 void *gestisci_gioco(void *arg)
 {
     Partita *p = (Partita *) arg;
-    char buffer_griglia[MAX];
     char messaggio[MAX];
 
     printf("La partita con id %d è iniziata tra %s e %s\n", p->id, p->giocatore[0]->nome,p->giocatore[1]->nome);
 
     while(p->stato == 0)
     {
-        
         int turno = p->turno;
         int avversario = (turno +1) %2;
-       
         
-        printf("è il turno di %s\n",p->giocatore[turno]->nome);
-
-        //formato_griglia(buffer_griglia, p->griglia);
-        
+        //invio del messaggio del turno e della griglia
         invia_messaggi(p->giocatore[turno]->socket, "TUO_TURNO\n");
         usleep(1);
-        invia_messaggi(p->giocatore[turno]->socket, p->griglia);
-        
         invia_messaggi(p->giocatore[avversario]->socket, "ATTENDI\n"); 
+        usleep(1);
+        invia_messaggi(p->giocatore[turno]->socket, p->griglia);
         usleep(1);
         invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
        
-    
-
+        //ricezione della mossa effettuata dal giocatore
         ricevi_messaggi(p->giocatore[turno]->socket, messaggio, sizeof(messaggio));
         int mossa=atoi(messaggio);
 
@@ -264,20 +257,20 @@ void *gestisci_gioco(void *arg)
 
         if(mossa_valida(p,mossa,p->giocatore[turno],p->giocatore[turno]->simbolo))
         {
-            if (controlla_vittoria(p->griglia, p->giocatore[turno]->simbolo))
+    
+            if (controlla_vittoria(p->griglia, p->giocatore[turno]->simbolo) == 1)
             {
-                p->stato = 1; // Partita terminata
+                p->stato = 1; 
 
-                //1 da ricevere
                 invia_messaggi(p->giocatore[turno]->socket, "PARTITA_VINTA!\n");
-                sleep(1);
+                usleep(1);
                 invia_messaggi(p->giocatore[turno]->socket, p->griglia);
                 invia_messaggi(p->giocatore[avversario]->socket, "PARTITA_PERSA!\n");
-                sleep(1);
+                usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
+                printf("La partita con id %d tra %s e %s è terminata e ha vinto %s\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome, p->giocatore[turno]->nome);
 
                 pthread_mutex_unlock(&p->mutex);
-                break; // Esce dal ciclo
             }
             
             if(controlla_pareggio(p->griglia))
@@ -290,14 +283,15 @@ void *gestisci_gioco(void *arg)
                 invia_messaggi(p->giocatore[avversario]->socket, "PAREGGIO!\n");
                 sleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
+                printf("La partita con id %d tra %s e %s è terminata. È un pareggio\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome);
 
-                pthread_mutex_unlock(&p->mutex);
-                break; // Esce dal ciclo  
+                pthread_mutex_unlock(&p->mutex); 
             }
 
             p->turno = avversario;
+           
         }else
-        {
+        {   
             invia_messaggi(p->giocatore[turno]->socket, "MOSSA NON VALIDA\n");
         }
 

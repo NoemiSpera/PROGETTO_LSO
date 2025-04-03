@@ -28,7 +28,7 @@ void nascondi_input();
 void ripristina_input();
 char *inserisci_nome();
 
-
+//funzioni per la gestione partita della partita
 void stampa_griglia(char griglia[N]);
 void gestisci_partita(int client_fd);
 
