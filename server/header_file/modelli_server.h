@@ -87,3 +87,4 @@ int ricevi_mossa(Giocatori *g);
 int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbolo);
 int controlla_vittoria(char g[N], char *simbolo);
 int controlla_pareggio(char g[N]);
+void chiedi_nuova_partita(Giocatori *giocatore);

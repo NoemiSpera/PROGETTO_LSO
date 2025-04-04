@@ -27,6 +27,7 @@ int main()
     printf(YELLOW "%s" RESET, buffer);
     printf(GREEN "Inserisci la tua scelta : " RESET);
     
+    
     while (1)
     {
         //Invio risposta al server

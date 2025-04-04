@@ -223,6 +223,7 @@ void gestisci_ingresso_partita(Giocatori *giocatore)
     pthread_cond_signal(&partita->cond);  // Sveglia il primo giocatore
     pthread_mutex_unlock(&partita->mutex);
     pthread_mutex_unlock(&partite_mutex);   
+
 }
 
 
@@ -252,12 +253,13 @@ void *gestisci_gioco(void *arg)
         ricevi_messaggi(p->giocatore[turno]->socket, messaggio, sizeof(messaggio));
         int mossa=atoi(messaggio);
 
+       
         //protegge la modifica della griglia
         pthread_mutex_lock(&p->mutex);
 
         if(mossa_valida(p,mossa,p->giocatore[turno],p->giocatore[turno]->simbolo))
         {
-    
+           
             if (controlla_vittoria(p->griglia, p->giocatore[turno]->simbolo) == 1)
             {
                 p->stato = 1; 
@@ -265,6 +267,7 @@ void *gestisci_gioco(void *arg)
                 invia_messaggi(p->giocatore[turno]->socket, "PARTITA_VINTA!\n");
                 usleep(1);
                 invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+                usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, "PARTITA_PERSA!\n");
                 usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
@@ -285,6 +288,7 @@ void *gestisci_gioco(void *arg)
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
                 printf("La partita con id %d tra %s e %s è terminata. È un pareggio\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome);
 
+
                 pthread_mutex_unlock(&p->mutex); 
             }
 
@@ -292,10 +296,13 @@ void *gestisci_gioco(void *arg)
            
         }else
         {   
-            invia_messaggi(p->giocatore[turno]->socket, "MOSSA NON VALIDA\n");
+            
+                invia_messaggi(p->giocatore[turno]->socket, "MOSSA_NON_VALIDA\n");
+                //usleep(1);
+                //invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+
         }
 
-       
         pthread_mutex_unlock(&p->mutex);
         
     }
@@ -309,6 +316,11 @@ int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbol
 {
     int indice = mossa -1;
 
+    if (mossa < 1 || mossa > 9) {
+        printf("Mossa non valida: numero fuori intervallo (1-9).\n");
+        return 0;
+    }
+
     if (partita->griglia[indice] == 'X' || partita->griglia[indice] == 'O') 
     {  
         printf("Mossa non valida: la cella è già occupata.\n");
@@ -321,7 +333,8 @@ int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbol
 
 
 
-int controlla_vittoria(char g[N], char *simbolo) {
+int controlla_vittoria(char g[N], char *simbolo) 
+{
     // Controlla righe
     for (int i = 0; i < 9; i += 3) {
         if (g[i] == *simbolo && g[i + 1] == *simbolo && g[i + 2] == *simbolo)
@@ -345,7 +358,8 @@ int controlla_vittoria(char g[N], char *simbolo) {
 
 
 
-int controlla_pareggio(char g[N]) {
+int controlla_pareggio(char g[N]) 
+{
     for (int i = 0; i < N; i++) {
         if (g[i] != 'X' && g[i] != 'O') {
             return 0; // C'è almeno una cella libera → Non è un pareggio
@@ -353,3 +367,4 @@ int controlla_pareggio(char g[N]) {
     }
     return 1; // Nessuna cella libera → È un pareggio
 }
+

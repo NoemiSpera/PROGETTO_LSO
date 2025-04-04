@@ -85,12 +85,24 @@ void ripristina_input()
 
 void stampa_griglia(char griglia[N]) 
 {
-    // Stampa la griglia in un formato simile a una tabella
-    printf("%c | %c | %c\n", griglia[0], griglia[1], griglia[2]);
-    printf("---------\n");
-    printf("%c | %c | %c\n", griglia[3], griglia[4], griglia[5]);
-    printf("---------\n");
-    printf("%c | %c | %c\n", griglia[6], griglia[7], griglia[8]);
+    for (int i = 0; i < 9; i++) {
+        char simbolo = griglia[i];
+        if (simbolo == 'X') {
+            printf(CYAN"%c"RESET, simbolo); 
+        } else if (simbolo == 'O') {
+            printf(YELLOW"%c"RESET, simbolo); 
+        } else {
+            printf("%c", simbolo);
+        }
+
+        if (i % 3 != 2) {
+            printf(" | ");
+        } else if (i != 8) {
+            printf("\n---------\n");
+        } else {
+            printf("\n");
+        }
+    }
 }
 
 
@@ -100,12 +112,14 @@ void gestisci_partita(int client_fd)
     char buffer[MAX];   
     char buffer_griglia[N];    
     int mossa;
+    int partita_in_corso=1;
 
     // Giocatore due si è unito
     ricevi_messaggi(client_fd, buffer, sizeof(buffer));
     printf("%s\n", buffer);
 
-    while (1)
+
+    while (partita_in_corso)
     {   
         // turno
         ricevi_messaggi(client_fd, buffer, sizeof(buffer));
@@ -119,16 +133,13 @@ void gestisci_partita(int client_fd)
         if (strncmp(buffer, "TUO_TURNO", 9) == 0)
         {
             printf("È IL TUO TURNO!\n");
-
-            do
-            {
-                printf("Scegli una mossa (1-9): ");
-                scanf("%d", &mossa);
-            } while (mossa < 1 || mossa > 9);
-
+            printf("Scegli una mossa (1-9): ");
+            scanf("%d", &mossa);
+            
             char risposta[10];
             sprintf(risposta, "%d", mossa);
             invia_messaggi(client_fd, risposta);
+            
         }
         else if (strncmp(buffer, "ATTENDI", 7) == 0)
         {
@@ -137,21 +148,32 @@ void gestisci_partita(int client_fd)
         else if (strncmp(buffer, "PARTITA_VINTA", 12) == 0)
         {
             printf("Hai vinto!\n");
-            break;
+            partita_in_corso=0;
+            
         }
         else if (strncmp(buffer, "PARTITA_PERSA", 13) == 0)
         {
             printf("Hai perso!\n");
-            break;
+            partita_in_corso=0;
+           
         }
         else if (strncmp(buffer, "PAREGGIO", 8) == 0)
         {
             printf("La partita è finita in pareggio!\n");
-            break;
+            partita_in_corso=0;
+            
         }
         else if (strncmp(buffer, "MOSSA_NON_VALIDA", 16) == 0)
         {
+            
             printf("Mossa non valida, riprova.\n");
+            printf("Scegli una mossa (1-9): ");
+            scanf("%d", &mossa);
+
+            char riprova[10];
+            sprintf(riprova, "%d", mossa);
+            invia_messaggi(client_fd, riprova);
+            
         }
         else
         {
@@ -159,4 +181,6 @@ void gestisci_partita(int client_fd)
             break;
         }
     }
+
 }
+
