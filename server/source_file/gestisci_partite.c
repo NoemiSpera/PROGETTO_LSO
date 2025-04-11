@@ -266,9 +266,9 @@ void *gestisci_gioco(void *arg)
 
                 invia_messaggi(p->giocatore[turno]->socket, "PARTITA_VINTA!\n");
                 usleep(1);
-                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
-                usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, "PARTITA_PERSA!\n");
+                usleep(1);
+                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
                 usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
                 printf("La partita con id %d tra %s e %s è terminata e ha vinto %s\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome, p->giocatore[turno]->nome);
@@ -281,10 +281,11 @@ void *gestisci_gioco(void *arg)
                 p->stato = 1;
 
                 invia_messaggi(p->giocatore[turno]->socket, "PAREGGIO!\n");
-                sleep(1);
-                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+                usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, "PAREGGIO!\n");
-                sleep(1);
+                usleep(1);
+                invia_messaggi(p->giocatore[turno]->socket, p->griglia);
+                usleep(1);
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
                 printf("La partita con id %d tra %s e %s è terminata. È un pareggio\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome);
 
