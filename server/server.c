@@ -9,6 +9,8 @@
 int main()
 {
     int server_socket;
+
+    inizializza_lista();
     
     creazione_socket(&server_socket);
 

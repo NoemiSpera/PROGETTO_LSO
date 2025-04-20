@@ -24,13 +24,19 @@ void invia_messaggi(int client_fd, char *msg);
 
 
 //funzioni per input da tastiera
-void nascondi_input();
-void ripristina_input();
 char *inserisci_nome();
+
+//funzioni per l'assegnazione della partita
+int scelta_partecipazione(int client_fd,char *nome);
+int gioca_con_amico(int client_fd, char *nome);
+void stampa_partite(char *buffer);
+int gestisci_richiesta_partecipazione(int client_fd);
 
 //funzioni per la gestione partita della partita
 void stampa_griglia(char griglia[N]);
-void gestisci_partita(int client_fd);
+int gestisci_partita(int client_fd);
 void gestisci_opzioni_post_partita(int client_fd);
+
+
 
 
