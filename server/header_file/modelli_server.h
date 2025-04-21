@@ -58,6 +58,7 @@ typedef struct
 
 
 extern ListaPartite *lista_partite;
+extern Giocatori *giocatori_connessi[MAX_COLLEGATI];
 
 
 //connessione col client in connessione.c
@@ -103,6 +104,7 @@ void *gestisci_gioco(void *arg);
 //gestione assegnazione partita
 int gestisci_scelta(Giocatori *giocatore, char scelta);
 int assegnazione_amico(Giocatori *giocatore);
+int assegnazione_casuale(Giocatori *giocatore);
 Partita* trova_partita(int id_partita);
 int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore);
 
@@ -117,5 +119,8 @@ int controlla_pareggio(char g[N]);
 void chiedi_nuova_partita(Giocatori *giocatore);
 
 
+void messaggio_broadcast(Giocatori *creatore, int id_partita);
+void aggiungi_giocatore(Giocatori* nuovo);
+void rimuovi_giocatore(int socket_fd);
+void stampa_lista_giocatori();
 
-void fine_partita(Giocatori *giocatore);

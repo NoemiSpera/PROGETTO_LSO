@@ -2,7 +2,30 @@
     #include "../header_file/colori.h"
     
 
-
+    void *ascolta_notifiche(void *arg) {
+        int client_fd = *((int *)arg);
+        char buffer[MAX];
+        
+        while (1) {
+            int n = recv(client_fd, buffer, sizeof(buffer) - 1, MSG_PEEK);
+            if (n > 0) {
+                buffer[n] = '\0';
+    
+                // Controlla se è una notifica
+                if (strncmp(buffer, "[NOTIFICA]", 10) == 0) {
+                    // Ora consuma davvero il messaggio
+                    n = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+                    buffer[n] = '\0';
+                    printf(MAGENTA "\n%s\n" RESET, buffer);  // stampa notifica
+                } else {
+                    // Non è una notifica → lasciala lì per il main thread
+                    usleep(100 * 1000); // piccola pausa per evitare busy-wait
+                }
+            }
+        }
+        return NULL;
+    }
+    
     //scambio messaggi
     ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
     {

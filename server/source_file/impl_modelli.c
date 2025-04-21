@@ -2,6 +2,9 @@
 #include "../header_file/colori.h"
 
 ListaPartite *lista_partite;
+pthread_mutex_t mutex_giocatori = PTHREAD_MUTEX_INITIALIZER;
+int numero_giocatori = 0;
+
 
 //messaggi su stdout
 void messaggio_benvenuto()
@@ -196,3 +199,80 @@ void conversione_lista_partite(char *buffer, size_t dim_max)
     pthread_mutex_unlock(&lista_partite->mutex);
 }
 
+
+void messaggio_broadcast(Giocatori *creatore, int id_partita)
+{
+    char msg[MAX];
+    snprintf(msg, sizeof(msg),
+        "[NOTIFICA] %s ha creato una nuova partita! ID: %d\nDigita 'A' per unirti come amico!",
+        creatore->nome, id_partita);
+
+    pthread_mutex_lock(&mutex_giocatori);
+    int notifiche_inviate = 0;
+
+    for (int i = 0; i < numero_giocatori; i++) {
+        Giocatori *g = giocatori_connessi[i];
+
+        if (g != NULL && g->in_partita == -1 && g->socket != creatore->socket) {
+            printf("Invio notifica a %s (socket: %d)\n", g->nome, g->socket);  // Log per debug
+            invia_messaggi(g->socket, msg);
+            notifiche_inviate++;
+        }
+    }
+
+    if (notifiche_inviate == 0) {
+        printf("Nessun giocatore libero a cui inviare la notifica\n");
+    }
+    pthread_mutex_unlock(&mutex_giocatori);
+}
+
+
+
+void aggiungi_giocatore(Giocatori* nuovo) {
+    pthread_mutex_lock(&mutex_giocatori);
+    
+    if (numero_giocatori < MAX_COLLEGATI) {
+        giocatori_connessi[numero_giocatori++] = nuovo;
+    } else {
+        printf("ERRORE: Limite massimo di giocatori raggiunto\n");
+    }
+
+    pthread_mutex_unlock(&mutex_giocatori);
+}
+
+
+void rimuovi_giocatore(int socket_fd) {
+    pthread_mutex_lock(&mutex_giocatori);
+
+    for (int i = 0; i < numero_giocatori; i++) {
+        if (giocatori_connessi[i]->socket == socket_fd) {
+            // Libera la memoria
+            free(giocatori_connessi[i]);
+
+            // Shift a sinistra per mantenere compattezza
+            for (int j = i; j < numero_giocatori - 1; j++) {
+                giocatori_connessi[j] = giocatori_connessi[j + 1];
+            }
+
+            numero_giocatori--;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&mutex_giocatori);
+}
+
+void stampa_lista_giocatori() {
+    pthread_mutex_lock(&mutex_giocatori);
+
+    printf("Lista dei giocatori connessi:\n");
+    for (int i = 0; i < numero_giocatori; i++) {
+        Giocatori* g = giocatori_connessi[i];
+        printf(" - %s (socket: %d) %s\n",
+               g->nome,
+               g->socket,
+               (g->in_partita == 1) ? "[IN PARTITA]" : "[LIBERO]");
+    }
+
+    pthread_mutex_unlock(&mutex_giocatori);
+}

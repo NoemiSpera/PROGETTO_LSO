@@ -37,6 +37,6 @@ void stampa_griglia(char griglia[N]);
 int gestisci_partita(int client_fd);
 void gestisci_opzioni_post_partita(int client_fd);
 
-
+void *ascolta_notifiche(void *arg);
 
 

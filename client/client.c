@@ -14,6 +14,10 @@ int main()
     // Connessione al server
     client_fd = connetti_al_server();
 
+    pthread_t thread_notifiche;
+    if (pthread_create(&thread_notifiche, NULL, ascolta_notifiche, (void *)&client_fd) != 0) {
+        perror("Errore creazione thread per le notifiche");
+    }   
     // Invio del nome al server e ricezione del messaggio di benvenuto
     nome = inserisci_nome();
     invia_messaggi(client_fd, nome);
@@ -50,12 +54,26 @@ int main()
             {
                 partita_disponibile = 1;
             }
+        }else if(scelta[0] == 'b' || scelta[0] == 'B')
+        {
+            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
+            printf("%s\n",buffer);
+
+            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
+            printf("%s",buffer);
+            if (strstr(buffer, "accettata!") != NULL)
+            {
+                partita_disponibile = 1;
+            }
+
         }
 
         
         if(scelta[0] == 'Q' || scelta[0] == 'q')
         {   
             printf("Uscita in corso......\n");
+            pthread_cancel(thread_notifiche);  // Forza l’uscita del thread
+            pthread_join(thread_notifiche, NULL); 
             close(client_fd);       
             free(nome);             
             exit(0);   
@@ -69,6 +87,5 @@ int main()
     }
 
     close(client_fd);
-    free(nome);
     return 0;
 }

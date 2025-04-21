@@ -6,12 +6,15 @@
 pthread_mutex_t partite_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
+
 /*variabili globali*/
 
 //gestione partite e giocatori
-//Giocatori *giocatore[MAX_COLLEGATI];
+Giocatori* giocatori_connessi[MAX_COLLEGATI];
+
 Partita *partite[MAX_PARTITE];
 atomic_int num_partite = ATOMIC_VAR_INIT(0);
+
 
 
 //inizializzazioni
@@ -32,7 +35,7 @@ Giocatori *inizializza_giocatore(int socket, int id_partita, char* nome, char *s
     strncpy(giocatore->nome, nome, MAX_NOME);
     giocatore->id_partita = id_partita;
     giocatore->stato = 0;
-    giocatore->in_partita=0;
+    giocatore->in_partita=-1;
     strcpy(giocatore->simbolo, simbolo);
 
     return giocatore;
@@ -124,6 +127,8 @@ Partita *creazione_partita(Giocatori *giocatore)
     invia_messaggi(giocatore->socket, msg);*/
 
     pthread_mutex_unlock(&partite_mutex);
+    
+    messaggio_broadcast(giocatore, nuova_partita->id);
 
     attendi_giocatore(id_partita, nuova_partita, giocatore);
 
@@ -134,29 +139,22 @@ Partita *creazione_partita(Giocatori *giocatore)
 
 Partita *cerca_partita_disponibile(Giocatori *giocatore)
 {
-    int id_partita = -1;
+    pthread_mutex_lock(&lista_partite->mutex); // Blocca il mutex
 
-    //trovar en'altra soluzione
-    // Troviamo una partita con solo un giocatore
-    for (int i = 0; i < MAX_PARTITE; i++)
+    Partita *current = lista_partite->head;
+
+    while (current != NULL)
     {
-        if (partite[i] != NULL && partite[i]->giocatore[1] == NULL)
+        if (current->stato == IN_ATTESA)
         {
-            id_partita = i;
-            break;
+            pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
+            return current;
         }
+        current = current->next;
     }
 
-    if (id_partita == -1)
-    {
-        invia_messaggi(giocatore->socket, "Nessuna partita disponibile al momento.\n");
-        pthread_mutex_unlock(&partite_mutex);
-        return NULL;
-    }
-
-    Partita *partita = partite[id_partita];
-
-    return partita;
+    pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
+    return NULL;     
 }
 
 
@@ -228,9 +226,9 @@ void *gestisci_gioco(void *arg)
                 invia_messaggi(p->giocatore[avversario]->socket, p->griglia);
                 printf("La partita con id %d tra %s e %s è terminata e ha vinto %s\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome, p->giocatore[turno]->nome);
 
-                p->giocatore[0]->in_partita = 0;
+                p->giocatore[0]->in_partita = -1;
                 p->giocatore[0]->id_partita = -1;
-                p->giocatore[1]->in_partita = 0;
+                p->giocatore[1]->in_partita = -1;
                 p->giocatore[1]->id_partita = -1;
 
 
@@ -259,9 +257,9 @@ void *gestisci_gioco(void *arg)
                 printf("La partita con id %d tra %s e %s è terminata. È un pareggio\n", p->id, p->giocatore[turno]->nome, p->giocatore[avversario]->nome);
 
 
-                p->giocatore[0]->in_partita = 0;
+                p->giocatore[0]->in_partita = -1;
                 p->giocatore[0]->id_partita = -1;
-                p->giocatore[1]->in_partita = 0;
+                p->giocatore[1]->in_partita = -1;
                 p->giocatore[1]->id_partita = -1;
 
 

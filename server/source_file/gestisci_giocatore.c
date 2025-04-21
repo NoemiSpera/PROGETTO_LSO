@@ -20,6 +20,9 @@ void *gestisci_client(void *arg)
     Giocatori *giocatore = inizializza_giocatore(client_socket,-1,buffer, "-1");
     giocatore->in_partita = -1; //non è in partita
 
+    stampa_lista_giocatori();
+    aggiungi_giocatore(giocatore);
+
     char benvenuto[256];
     snprintf(benvenuto, sizeof(benvenuto), "%s%sCiao %.200s, benvenuto nel server!%s\n", CYAN, BOLD, buffer, RESET);
     invia_messaggi(client_socket, benvenuto);
@@ -53,7 +56,7 @@ void *gestisci_client(void *arg)
                 char msg[] = "Vuoi:\nC) Creare una nuova partita\nA) Giocare con un AMICO\nB) Unirti ad una partita CASUALE\nQ) Uscire\n";
                 printf("DEBUG: Menu stampato dopo la fine della partita...\n");
                 giocatore->id_partita = -1;
-                giocatore->in_partita = 0;
+                giocatore->in_partita = -1;
 
             }
         }
@@ -113,15 +116,15 @@ int  gestisci_scelta(Giocatori *giocatore, char scelta)
         case 'B':
         case 'b':
             printf("%s ha scelto di partecipare ad una partita casuale\n", giocatore->nome);
-            //int esito_casuale = assegnazione_casuale(giocatore); // Partecipazione casuale
-            //return esito_casuale;
-            break;
+            int esito_casuale = assegnazione_casuale(giocatore); // Partecipazione casuale
+            return esito_casuale;
+        
 
         case 'Q':
         case 'q':
         printf("Uscita in corso del giocatore %s...\n", giocatore->nome);
-        close(giocatore->socket);  
-        free(giocatore);       
+        rimuovi_giocatore(giocatore->socket);
+        close(giocatore->socket);      
         pthread_exit(NULL);  
 
         default:
@@ -179,6 +182,49 @@ int assegnazione_amico(Giocatori *giocatore)
     }
 }
 
+
+
+int assegnazione_casuale(Giocatori *giocatore)
+{
+    Partita *partita = cerca_partita_disponibile(giocatore);
+
+    char msg[MAX];
+    snprintf(msg, sizeof(msg),"Sei stato assegnato alla partita %d. attendiamo la risposta del creatore", partita->id);
+    invia_messaggi(giocatore->socket,msg);
+   
+    if (partita != NULL)
+    {
+        //Giocatori *creatore = partita->giocatore[0];
+        if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1)
+        {
+            giocatore->id_partita = partita->id;
+            strcpy(giocatore->simbolo, "O");
+            giocatore->in_partita = 1;
+
+            partita->giocatore[1] = giocatore;
+            partita->giocatore[0]->in_partita = 1;
+
+            pthread_mutex_lock(&partita->mutex);
+            pthread_cond_signal(&partita->cond); // Svegliamo il creatore
+            pthread_mutex_unlock(&partita->mutex);
+            avvia_thread_partita(partita);
+            printf("sto tornando in gestisci scelta\n");
+            return 1;
+        }
+        else
+        {
+            return -1; // Partita rifiutata
+        }
+    }
+    else{
+        printf("nessuna partita disponibile al momento \n");
+        return -1;
+    }
+
+}
+
+
+
     int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore)
     {
         // Invia richiesta di partecipazione al creatore della partita
@@ -227,28 +273,4 @@ int assegnazione_amico(Giocatori *giocatore)
 
         pthread_mutex_unlock(&lista_partite->mutex);  // Sblocca il mutex
         return NULL;  // Se non trova la partita
-    }
-
-
-    void fine_partita(Giocatori *giocatore) {
-        char buffer[MAX];
-        
-        // Invia messaggio di fine partita al client
-        invia_messaggi(giocatore->socket, "La partita è terminata. Vuoi rigiocare?(S) o tornare al menu principale (M)?\n");
-    
-        // Ricevi la risposta dal client
-        int bytes_ricevuti = ricevi_messaggi(giocatore->socket, buffer, sizeof(buffer));
-        if (bytes_ricevuti > 0) {
-            if (buffer[0] == 'S' || buffer[0] == 's') {
-                // Il giocatore vuole rigiocare, avvia una nuova partita
-                creazione_partita(giocatore);
-            } else if (buffer[0] == 'M' || buffer[0] == 'm') {
-                giocatore->in_partita = 0;// Il giocatore vuole tornare al menu principale
-                return;  // Torna al ciclo principale, il menu verrà mostrato di nuovo
-            } else {
-                invia_messaggi(giocatore->socket, "Scelta non valida. Torno al menu.\n");
-                giocatore->in_partita = 0;
-                return;  // Torna al ciclo principale, il menu verrà mostrato di nuovo
-            }
-        }
     }
