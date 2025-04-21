@@ -2,20 +2,6 @@
 #include "../header_file/colori.h"
 
 
-//mutex
-pthread_mutex_t partite_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
-
-/*variabili globali*/
-
-//gestione partite e giocatori
-Giocatori* giocatori_connessi[MAX_COLLEGATI];
-
-Partita *partite[MAX_PARTITE];
-atomic_int num_partite = ATOMIC_VAR_INIT(0);
-
-
 
 //inizializzazioni
 void inizializza_griglia(char griglia[N])
@@ -77,88 +63,6 @@ Partita* inizializza_partita(int id_partita, Giocatori *giocatore)
 
 
 
-int generazione_id(Giocatori *giocatore)
-{
-
-    // Genera un ID univoco per la nuova partita
-    int id_partita = atomic_fetch_add(&num_partite, 1);  // Incrementa atomico e restituisce il valore precedente
-    if (id_partita >= MAX_PARTITE)
-    {
-        invia_messaggi(giocatore->socket, YELLOW "Limite massimo di partite raggiunto\n" RESET);
-        return -1;
-    }
-
-    return id_partita;
-}
-
-
-
-void attendi_giocatore(int id_partita, Partita* partita, Giocatori *giocatore)
-{
-    pthread_mutex_lock(&partita->mutex);
-    
-    while (partita->giocatore[1] == NULL)
-    {
-        printf("%s ha creato la partita %d ed è in attesa di un altro giocatore...\n", giocatore->nome, id_partita);
-        pthread_cond_wait(&partita->cond, &partita->mutex);  // Sospendi il thread
-    }
-    pthread_mutex_unlock(&partita->mutex);
-
-}
-
-
-
-Partita *creazione_partita(Giocatori *giocatore)
-{
-    //protegge l'accesso alla lista globale delle partite
-    pthread_mutex_lock(&partite_mutex);
-
-    int id_partita = generazione_id(giocatore);
-
-    Partita* nuova_partita = inizializza_partita(id_partita,giocatore);
-    nuova_partita->stato=IN_ATTESA;
-
-    inizializza_griglia(nuova_partita->griglia);
-
-    aggiungi_partita(nuova_partita);
-   
-    /*char msg[MAX];
-    snprintf(msg, sizeof(msg), "Partita creata con ID %d. In attesa di un altro giocatore...\n", id_partita);
-    invia_messaggi(giocatore->socket, msg);*/
-
-    pthread_mutex_unlock(&partite_mutex);
-    
-    messaggio_broadcast(giocatore, nuova_partita->id);
-
-    attendi_giocatore(id_partita, nuova_partita, giocatore);
-
-    return nuova_partita;
-}
-
-
-
-Partita *cerca_partita_disponibile(Giocatori *giocatore)
-{
-    pthread_mutex_lock(&lista_partite->mutex); // Blocca il mutex
-
-    Partita *current = lista_partite->head;
-
-    while (current != NULL)
-    {
-        if (current->stato == IN_ATTESA)
-        {
-            pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
-            return current;
-        }
-        current = current->next;
-    }
-
-    pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
-    return NULL;     
-}
-
-
-
 void avvia_thread_partita(Partita *partita)
 {
     pthread_t thread_partita;
@@ -173,7 +77,6 @@ void avvia_thread_partita(Partita *partita)
 
     partita->stato=IN_CORSO;
     pthread_mutex_unlock(&partita->mutex);
-    printf("Sto tornando in assegnazione amico...\n");
 }
 
 
@@ -205,8 +108,6 @@ void *gestisci_gioco(void *arg)
         int mossa=atoi(messaggio);
 
        
-        //protegge la modifica della griglia
-       
         if(mossa_valida(p,mossa,p->giocatore[turno],p->giocatore[turno]->simbolo))
         {
         
@@ -231,11 +132,6 @@ void *gestisci_gioco(void *arg)
                 p->giocatore[1]->in_partita = -1;
                 p->giocatore[1]->id_partita = -1;
 
-
-                printf("DEBUG: La partita è finita, sveglio i giocatori...stato partita: %d\n",p->stato);
-               
-               
-               
                 continue;
                
             }
@@ -262,30 +158,20 @@ void *gestisci_gioco(void *arg)
                 p->giocatore[1]->in_partita = -1;
                 p->giocatore[1]->id_partita = -1;
 
-
-               
-                printf("DEBUG: La partita è finita, sveglio i giocatori...stato partita: %d\n",p->stato);
-                
-               
-               continue; 
+                continue; 
                 
             }
 
             p->turno = avversario;
            
         }else
-        {   
-            
-                invia_messaggi(p->giocatore[turno]->socket, "MOSSA_NON_VALIDA\n");
-                //usleep(1);
-                //invia_messaggi(p->giocatore[turno]->socket, p->griglia);
-
+        {       
+            invia_messaggi(p->giocatore[turno]->socket, "MOSSA_NON_VALIDA\n");
         } 
                
         
     }
     pthread_mutex_unlock(&p->mutex);
-    //rimuovi_partita(p->id);
     return NULL;
 }
 
@@ -333,7 +219,7 @@ int controlla_vittoria(char g[N], char *simbolo)
         return 1;
     }
 
-    return 0; // Nessuna vittoria trovata
+    return 0; 
 }
 
 
@@ -342,9 +228,8 @@ int controlla_pareggio(char g[N])
 {
     for (int i = 0; i < N; i++) {
         if (g[i] != 'X' && g[i] != 'O') {
-            return 0; // C'è almeno una cella libera → Non è un pareggio
+            return 0; 
         }
     }
-    return 1; // Nessuna cella libera → È un pareggio
+    return 1;
 }
-

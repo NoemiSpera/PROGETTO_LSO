@@ -19,6 +19,11 @@
 #define LARGHEZZA 60
 #define MAX 1024
 
+//mutex per la lista globale delle partita 
+extern pthread_mutex_t partite_mutex;
+extern atomic_int num_partite;
+
+
 
  //strutture
 typedef struct 
@@ -28,7 +33,7 @@ typedef struct
     int id_partita;
     int stato;                  /* 0 = "non è il suo turno" | 1 = "è il suo turno" */
     int in_partita;
-    char simbolo[10];                /* 0 = "O" | 1 = "X" */
+    char simbolo[10];              
 } Giocatori;
 
 typedef enum { NUOVA, IN_ATTESA, IN_CORSO, TERMINATA } StatoPartita;
@@ -66,61 +71,54 @@ void creazione_socket(int *server_fd);
 void accetta_connessioni(int server_fd);
 
 
-//messaggi su stdout
+//messaggi su stdout in impl_server.c 
 void stampa_bordo();
 void stampa_testo_centrato(const char *testo);
 void messaggio_benvenuto();
 void invia_menu_principale(int client_fd);
 
 
-
-//scambio messaggi
+//scambio messaggi in impl_server.c
 void invia_messaggi(int client_fd, char *msg);
 ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
+void messaggio_broadcast(Giocatori *creatore, int id_partita);
 
 
-
-//inizializzazioni
-void inizializza_griglia(char griglia[N]);
-Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
-Partita *inizializza_partita(int id_partita, Giocatori *giocatore);
-int generazione_id(Giocatori *giocatore);
-void attendi_giocatore(int id_partita, Partita* partita, Giocatori *giocatore);
-Partita *cerca_partita_disponibile(Giocatori *giocatore);
-void unisci_a_partita(Partita *partita, Giocatori *giocatore);
-
-
-//gestione delle liste
+//gestione delle liste in impl_servr.c
 void inizializza_lista();
 void aggiungi_partita(Partita *nuova_partita);
 void rimuovi_partita(int id);
 void stampa_partite();
 void conversione_lista_partite(char *buffer, size_t dim_max);
+void aggiungi_giocatore(Giocatori* nuovo);
+void rimuovi_giocatore(int socket_fd);
 
-//gestione client
-void *gestisci_client(void *arg);
+
+//gestione della partita in gestione_partite.c
+void inizializza_griglia(char griglia[N]);
+Partita *inizializza_partita(int id_partita, Giocatori *giocatore);
+Giocatori *inizializza_giocatore(int socket, int id_partita, char *nome, char *simbolo);
+
 void *gestisci_gioco(void *arg);
 
-//gestione assegnazione partita
+
+
+
+//gestione client per l'assegnazione della partita in gestisci_client.c
+void *gestisci_client(void *arg);
 int gestisci_scelta(Giocatori *giocatore, char scelta);
+Partita *creazione_partita(Giocatori *giocatore);
+int generazione_id(Giocatori *giocatore);
+void attendi_giocatore(int id_partita, Partita* partita, Giocatori *giocatore);
 int assegnazione_amico(Giocatori *giocatore);
 int assegnazione_casuale(Giocatori *giocatore);
+Partita *cerca_partita_disponibile(Giocatori *giocatore);
 Partita* trova_partita(int id_partita);
 int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore);
 
 
-//gestione del gioco
-Partita *creazione_partita(Giocatori *giocatore);
+//gestione del gioco in gestisci_partite.c
 void avvia_thread_partita(Partita *partita);
-int ricevi_mossa(Giocatori *g);
 int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbolo);
 int controlla_vittoria(char g[N], char *simbolo);
 int controlla_pareggio(char g[N]);
-void chiedi_nuova_partita(Giocatori *giocatore);
-
-
-void messaggio_broadcast(Giocatori *creatore, int id_partita);
-void aggiungi_giocatore(Giocatori* nuovo);
-void rimuovi_giocatore(int socket_fd);
-void stampa_lista_giocatori();
-

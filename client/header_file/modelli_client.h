@@ -14,29 +14,23 @@
 #define MAX 1024
 #define N 20
 
-//funzione per la connessione
+//funzione per la connessione in connessione.c
 int connetti_al_server();
 
 
-//funzioni per la comunicazione 
+//funzioni per la comunicazione in impl_client.c
+void *ascolta_notifiche(void *arg);
 ssize_t ricevi_messaggi(int client_fd, char* buffer, size_t buf_size);
 void invia_messaggi(int client_fd, char *msg);
 
 
-//funzioni per input da tastiera
+//funzioni per input da tastiera in impl_client.c
 char *inserisci_nome();
 
-//funzioni per l'assegnazione della partita
-int scelta_partecipazione(int client_fd,char *nome);
-int gioca_con_amico(int client_fd, char *nome);
-void stampa_partite(char *buffer);
-int gestisci_richiesta_partecipazione(int client_fd);
-
-//funzioni per la gestione partita della partita
-void stampa_griglia(char griglia[N]);
+//funzioni per l'assegnazione della partita n gestisci_gioco.c
+int richiesta_partecipazione(int client_fd);
+int gioca_con_amico(int client_fd);
+int partita_casuale(int client_fd);
 int gestisci_partita(int client_fd);
-void gestisci_opzioni_post_partita(int client_fd);
-
-void *ascolta_notifiche(void *arg);
-
-
+void stampa_griglia(char griglia[N]);
+void stampa_partite(char *buffer);

@@ -1,6 +1,6 @@
 #regola principale
-server: server.o connessione.o impl_modelli.o gestisci_giocatore.o gestisci_partite.o
-	gcc -o server server.o connessione.o impl_modelli.o  gestisci_giocatore.o gestisci_partite.o
+server: server.o connessione.o impl_server.o gestisci_giocatore.o gestisci_partite.o
+	gcc -o server server.o connessione.o impl_server.o  gestisci_giocatore.o gestisci_partite.o
 
 #regole per la compilazione di ogni singolo file sorgente
 server.o:
@@ -9,8 +9,8 @@ server.o:
 connessione.o:
 	gcc -c source_file/connessione.c -o connessione.o
 
-impl_modelli.o:
-	gcc -c source_file/impl_modelli.c -o impl_modelli.o
+impl_server.o:
+	gcc -c source_file/impl_server.c -o impl_server.o
 
 gestisci_giocatore.o:
 	gcc -c source_file/gestisci_giocatore.c -o gestisci_giocatore.o
@@ -20,7 +20,7 @@ gestisci_partite.o:
 
 #rimozione dei file compilati
 clean:
-	rm -f server.o connessione.o impl_modelli.o  gestisci_giocatore.o gestisci_partite.o server
+	rm -f server.o connessione.o impl_server.o  gestisci_giocatore.o gestisci_partite.o server
 
 run_server: server
 	./server

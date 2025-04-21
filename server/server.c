@@ -18,8 +18,6 @@ int main()
     
     accetta_connessioni(server_socket);
 
-    
-   
     close(server_socket);
     return 0;
 }

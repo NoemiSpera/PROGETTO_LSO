@@ -9,8 +9,7 @@ int main()
     char buffer[MAX];
     char buffer_griglia[MAX];
     char scelta[10];
-    char id[10];
-
+    
     // Connessione al server
     client_fd = connetti_al_server();
 
@@ -35,50 +34,35 @@ int main()
         invia_messaggi(client_fd, scelta);
 
         int partita_disponibile = 0;
-
-        if(scelta[0] == 'C' || scelta[0] == 'c')
-        {   
-            partita_disponibile = gestisci_richiesta_partecipazione(client_fd);
-
-        } else if ( scelta[0] == 'A' || scelta[0] == 'a')
-        {
-            //lista partite
-            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-            printf("%s",buffer);
-            printf(GREEN "Inserisci l'id della partita a cui vuoi partecipare: "RESET);
-            scanf(" %s",id);
-            invia_messaggi(client_fd,id);
-            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-            printf("%s",buffer);
-            if (strstr(buffer, "accettata!") != NULL)
-            {
-                partita_disponibile = 1;
-            }
-        }else if(scelta[0] == 'b' || scelta[0] == 'B')
-        {
-            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-            printf("%s\n",buffer);
-
-            ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-            printf("%s",buffer);
-            if (strstr(buffer, "accettata!") != NULL)
-            {
-                partita_disponibile = 1;
-            }
-
-        }
-
+        char opzione = scelta[0];
         
-        if(scelta[0] == 'Q' || scelta[0] == 'q')
-        {   
-            printf("Uscita in corso......\n");
-            pthread_cancel(thread_notifiche);  // Forza l’uscita del thread
-            pthread_join(thread_notifiche, NULL); 
-            close(client_fd);       
-            free(nome);             
-            exit(0);   
-        }
-               
+        switch (opzione)
+        {
+            case 'C':
+            case 'c':
+                partita_disponibile = richiesta_partecipazione(client_fd);
+                break;
+            case 'A':
+            case 'a':
+                partita_disponibile = gioca_con_amico(client_fd);
+                break;
+            case 'B':
+            case 'b':
+                partita_disponibile = partita_casuale(client_fd);
+                break;
+            case 'Q':
+            case 'q':
+                printf("Uscita in corso......\n");
+                pthread_cancel(thread_notifiche);  
+                pthread_join(thread_notifiche, NULL); 
+                close(client_fd);       
+                free(nome);             
+                exit(0);   
+            default:
+                ricevi_messaggi(client_fd,buffer,sizeof(buffer));
+                printf(RED"%s"RESET,buffer);
+                break;
+        }      
 
         if (partita_disponibile) {
             gestisci_partita(client_fd);

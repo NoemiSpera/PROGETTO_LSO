@@ -1,58 +1,26 @@
 #include "../header_file/modelli_server.h"
 #include "../header_file/colori.h"
 
-ListaPartite *lista_partite;
+
+
+//mutex
+pthread_mutex_t partite_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_giocatori = PTHREAD_MUTEX_INITIALIZER;
+
+
+
+/*variabili globali*/
+Giocatori* giocatori_connessi[MAX_COLLEGATI];
+ListaPartite *lista_partite;
+atomic_int num_partite = ATOMIC_VAR_INIT(0);
 int numero_giocatori = 0;
 
 
-//messaggi su stdout
-void messaggio_benvenuto()
-{
-    stampa_bordo();
-    printf("\n");
-    stampa_testo_centrato(BOLD CYAN"BENVENUTO NEL SERVER DEL TRIS" RESET);
-    stampa_testo_centrato(BOLD BLUE"TRE SEGNI, UN VINCITORE. SARAI TU?\n" RESET);
-    stampa_bordo();
-}
 
-
-
-void stampa_bordo()
-{
-    for(int i=0; i < LARGHEZZA; i++)
-    {
-        printf("=");
-    }
-    printf("\n");
-}
-
-
-
-void stampa_testo_centrato(const char *testo)
-{
-    int lunghezza_testo = strlen(testo);
-    int centro = (LARGHEZZA - lunghezza_testo) / 2;
-    for(int i = 0; i < centro - 1; i++)
-    printf(" ");
-    {
-        printf(" ");
-    }
-    printf("%s", testo);
-    for(int i=0; i < (LARGHEZZA - (lunghezza_testo - 1) - centro); i++)
-    {
-        printf(" ");
-    }
-    printf("\n");
-}
-
-
-
-//scambio messaggi client-server
+//scambio messaggi 
 ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
 {
     ssize_t n;
-    
     memset(buffer, 0, buf_size); // Puliamo il buffer
     n = recv(client_fd, buffer, buf_size - 1, 0);
     if(n == -1)
@@ -69,6 +37,7 @@ ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
 }
 
 
+
 void invia_messaggi(int client_fd, char *msg)
 {
     if(send(client_fd, msg, strlen(msg), MSG_NOSIGNAL) == -1)
@@ -81,6 +50,34 @@ void invia_messaggi(int client_fd, char *msg)
 }
 
 
+
+void messaggio_broadcast(Giocatori *creatore, int id_partita)
+{
+    char msg[MAX];
+    snprintf(msg, sizeof(msg),"[NOTIFICA] %s ha creato una nuova partita! ID: %d\nDigita 'A' per unirti come amico!",creatore->nome, id_partita);
+
+    pthread_mutex_lock(&mutex_giocatori);
+    int notifiche_inviate = 0;
+
+    for (int i = 0; i < numero_giocatori; i++) {
+        Giocatori *g = giocatori_connessi[i];
+
+        if (g != NULL && g->in_partita == -1 && g->socket != creatore->socket) {
+
+            invia_messaggi(g->socket, msg);
+            notifiche_inviate++;
+        }
+    }
+
+    if (notifiche_inviate == 0) {
+        printf("Nessun giocatore libero a cui inviare la notifica\n");
+    }
+    pthread_mutex_unlock(&mutex_giocatori);
+}
+
+
+
+//funzioni per la gestione della lista delle partite
 void inizializza_lista()
 {
     lista_partite = malloc(sizeof(ListaPartite));
@@ -107,16 +104,15 @@ void aggiungi_partita(Partita *nuova_partita)
     
     nuova_partita->next = NULL;
     
-    // Se la lista è vuota, la nuova partita diventa la testa
     if (lista_partite->head == NULL) {
         lista_partite->head = nuova_partita;
     } else {
-        // Trova l'ultimo nodo della lista
+       
         Partita *current = lista_partite->head;
         while (current->next != NULL) {
             current = current->next;
         }
-        // Aggiunge la nuova partita in coda
+        
         current->next = nuova_partita;
     }
     
@@ -162,9 +158,9 @@ void rimuovi_partita(int id)
 
 void stampa_partite() 
 {
-    pthread_mutex_lock(&lista_partite->mutex);  // Blocca l'accesso alla lista
+    pthread_mutex_lock(&lista_partite->mutex);  
 
-    Partita *corrente = lista_partite->head;  // Inizializza la variabile corrente alla testa della lista
+    Partita *corrente = lista_partite->head;  
 
     while (corrente != NULL) {
         if (corrente->stato == IN_ATTESA) 
@@ -172,11 +168,12 @@ void stampa_partite()
             printf("ID: %d |creatore: %s\n", corrente->id,corrente->giocatore[0]->nome);
         }
 
-        corrente = corrente->next;  // Passa alla partita successiva
+        corrente = corrente->next;  
     }
 
-    pthread_mutex_unlock(&lista_partite->mutex);  // Sblocca l'accesso alla lista
+    pthread_mutex_unlock(&lista_partite->mutex);  
 }
+
 
 
 void conversione_lista_partite(char *buffer, size_t dim_max)
@@ -200,35 +197,11 @@ void conversione_lista_partite(char *buffer, size_t dim_max)
 }
 
 
-void messaggio_broadcast(Giocatori *creatore, int id_partita)
+
+//funzione per la getsione della lista dei giocatori
+void aggiungi_giocatore(Giocatori* nuovo) 
 {
-    char msg[MAX];
-    snprintf(msg, sizeof(msg),
-        "[NOTIFICA] %s ha creato una nuova partita! ID: %d\nDigita 'A' per unirti come amico!",
-        creatore->nome, id_partita);
-
-    pthread_mutex_lock(&mutex_giocatori);
-    int notifiche_inviate = 0;
-
-    for (int i = 0; i < numero_giocatori; i++) {
-        Giocatori *g = giocatori_connessi[i];
-
-        if (g != NULL && g->in_partita == -1 && g->socket != creatore->socket) {
-            printf("Invio notifica a %s (socket: %d)\n", g->nome, g->socket);  // Log per debug
-            invia_messaggi(g->socket, msg);
-            notifiche_inviate++;
-        }
-    }
-
-    if (notifiche_inviate == 0) {
-        printf("Nessun giocatore libero a cui inviare la notifica\n");
-    }
-    pthread_mutex_unlock(&mutex_giocatori);
-}
-
-
-
-void aggiungi_giocatore(Giocatori* nuovo) {
+    
     pthread_mutex_lock(&mutex_giocatori);
     
     if (numero_giocatori < MAX_COLLEGATI) {
@@ -241,12 +214,15 @@ void aggiungi_giocatore(Giocatori* nuovo) {
 }
 
 
-void rimuovi_giocatore(int socket_fd) {
+
+void rimuovi_giocatore(int socket_fd) 
+{
+    
     pthread_mutex_lock(&mutex_giocatori);
 
     for (int i = 0; i < numero_giocatori; i++) {
         if (giocatori_connessi[i]->socket == socket_fd) {
-            // Libera la memoria
+            
             free(giocatori_connessi[i]);
 
             // Shift a sinistra per mantenere compattezza
@@ -262,17 +238,44 @@ void rimuovi_giocatore(int socket_fd) {
     pthread_mutex_unlock(&mutex_giocatori);
 }
 
-void stampa_lista_giocatori() {
-    pthread_mutex_lock(&mutex_giocatori);
 
-    printf("Lista dei giocatori connessi:\n");
-    for (int i = 0; i < numero_giocatori; i++) {
-        Giocatori* g = giocatori_connessi[i];
-        printf(" - %s (socket: %d) %s\n",
-               g->nome,
-               g->socket,
-               (g->in_partita == 1) ? "[IN PARTITA]" : "[LIBERO]");
+
+//messaggi su stdout
+void messaggio_benvenuto()
+{
+    stampa_bordo();
+    printf("\n");
+    stampa_testo_centrato(BOLD CYAN"BENVENUTO NEL SERVER DEL TRIS" RESET);
+    stampa_testo_centrato(BOLD BLUE"TRE SEGNI, UN VINCITORE. SARAI TU?\n" RESET);
+    stampa_bordo();
+}
+
+
+
+void stampa_bordo()
+{
+    for(int i=0; i < LARGHEZZA; i++)
+    {
+        printf("=");
     }
+    printf("\n");
+}
 
-    pthread_mutex_unlock(&mutex_giocatori);
+
+
+void stampa_testo_centrato(const char *testo)
+{
+    int lunghezza_testo = strlen(testo);
+    int centro = (LARGHEZZA - lunghezza_testo) / 2;
+    for(int i = 0; i < centro - 1; i++)
+    printf(" ");
+    {
+        printf(" ");
+    }
+    printf("%s", testo);
+    for(int i=0; i < (LARGHEZZA - (lunghezza_testo - 1) - centro); i++)
+    {
+        printf(" ");
+    }
+    printf("\n");
 }
