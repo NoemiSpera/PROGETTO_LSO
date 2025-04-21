@@ -89,7 +89,7 @@ void inizializza_lista();
 void aggiungi_partita(Partita *nuova_partita);
 void rimuovi_partita(int id);
 void stampa_partite();
-void conversione_lista_partite(char *buffer, size_t dim_max);
+int conversione_lista_partite(char *buffer, size_t dim_max);
 void aggiungi_giocatore(Giocatori* nuovo);
 void rimuovi_giocatore(int socket_fd);
 

@@ -61,7 +61,6 @@ void *gestisci_client(void *arg)
         
         char msg[] = "Vuoi:\nC) Creare una nuova partita\nA) Giocare con un AMICO\nB) Unirti ad una partita CASUALE\nQ) Uscire\n";
         invia_messaggi(client_socket, msg);
-        printf("Attendo ricezione del messaggio...\n");
 
         int bytes_ricevuti = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
         if (bytes_ricevuti > 0) {
@@ -69,9 +68,9 @@ void *gestisci_client(void *arg)
             int esito = gestisci_scelta(giocatore, scelta);  // Processa la scelta
             
             
-            if (esito == 1 ) {
+            /*if (esito == 1 ) {
                 continue;
-            }
+            }*/
         } 
         else {
             // Connessione chiusa o errore
@@ -197,45 +196,74 @@ int assegnazione_amico(Giocatori *giocatore)
     int id_partita;
     Partita *partita = NULL;
 
-    conversione_lista_partite(messaggio, sizeof(messaggio));
-    invia_messaggi(giocatore->socket,messaggio);
-        
-    // Riceve l'ID della partita dal client
-    ricevi_messaggi(giocatore->socket, messaggio, sizeof(messaggio));
-    id_partita = atoi(messaggio);  
-
-    // Cerca la partita
-    partita = trova_partita(id_partita);
-
-    if (partita == NULL) {
-            
-        snprintf(messaggio, sizeof(messaggio), "La partita con ID %d non esiste. Riprova dal menu!\n", id_partita);
-        //mettere il messaggio di ricezione nel client
-        invia_messaggi(giocatore->socket, messaggio);  
+    if (conversione_lista_partite(messaggio, sizeof(messaggio)) == 0) {
+        snprintf(messaggio, sizeof(messaggio), RED"Nessuna partita disponibile al momento. Torno al menu"RESET);
+        invia_messaggi(giocatore->socket, messaggio);
+        usleep(1);
         return -1;
-        
+    
+    }else{
+        invia_messaggi(giocatore->socket,messaggio);
+         // Riceve l'ID della partita dal client
+        ricevi_messaggi(giocatore->socket, messaggio, sizeof(messaggio));
+        id_partita = atoi(messaggio);  
+
+        // Cerca la partita
+        partita = trova_partita(id_partita);
+
+        if (partita == NULL) {
+                
+            snprintf(messaggio, sizeof(messaggio), "La partita con ID %d non esiste. Riprova dal menu!\n", id_partita);
+            //mettere il messaggio di ricezione nel client
+            invia_messaggi(giocatore->socket, messaggio);  
+            return -1;
+            
+        }
+
+        Giocatori *creatore = partita->giocatore[0];
+        if (notifica_creatore(partita, creatore, giocatore) == 1)
+        {
+            giocatore->id_partita = partita->id;
+            strcpy(giocatore->simbolo, "O");
+            giocatore->in_partita = 1;
+
+            partita->giocatore[1] = giocatore;
+            partita->giocatore[0]->in_partita = 1;
+
+            pthread_mutex_lock(&partita->mutex);
+            pthread_cond_signal(&partita->cond);  // Svegliamo il creatore
+            pthread_mutex_unlock(&partita->mutex);
+            avvia_thread_partita(partita);
+            
+            return 1;
+        } 
+        else {
+            return -1;  // Partita rifiutata
+        }
+    }  
+}
+
+
+
+int numero_partite_disponibili() {
+    int count = 0;
+    Partita *curr;
+
+    pthread_mutex_lock(&lista_partite->mutex);
+    
+    curr = lista_partite->head;
+
+    while (curr != NULL) {
+
+        if (curr->stato == IN_ATTESA) {
+            count++;
+        }
+        curr = curr->next;
     }
 
-    Giocatori *creatore = partita->giocatore[0];
-    if (notifica_creatore(partita, creatore, giocatore) == 1)
-    {
-        giocatore->id_partita = partita->id;
-        strcpy(giocatore->simbolo, "O");
-        giocatore->in_partita = 1;
+    pthread_mutex_unlock(&lista_partite->mutex);
 
-        partita->giocatore[1] = giocatore;
-        partita->giocatore[0]->in_partita = 1;
-
-        pthread_mutex_lock(&partita->mutex);
-        pthread_cond_signal(&partita->cond);  // Svegliamo il creatore
-        pthread_mutex_unlock(&partita->mutex);
-        avvia_thread_partita(partita);
-        
-        return 1;
-    } 
-    else {
-        return -1;  // Partita rifiutata
-    }
+    return count;
 }
 
 
@@ -245,12 +273,12 @@ int assegnazione_casuale(Giocatori *giocatore)
     Partita *partita = cerca_partita_disponibile(giocatore);
 
     char msg[MAX];
-    snprintf(msg, sizeof(msg),"Sei stato assegnato alla partita %d. attendiamo la risposta del creatore", partita->id);
-    invia_messaggi(giocatore->socket,msg);
 
     if (partita != NULL)
     {
-        //Giocatori *creatore = partita->giocatore[0];
+        snprintf(msg, sizeof(msg),"Sei stato assegnato alla partita %d. attendiamo la risposta del creatore\n", partita->id);
+        invia_messaggi(giocatore->socket,msg);
+
         if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1)
         {
             giocatore->id_partita = partita->id;
@@ -272,7 +300,8 @@ int assegnazione_casuale(Giocatori *giocatore)
         }
     }
     else{
-        printf("nessuna partita disponibile al momento \n");
+        invia_messaggi(giocatore->socket,RED"Nessuna partita disponibile al momento. Torno al menu\n"RESET);
+        usleep(1);
         return -1;
     }
 

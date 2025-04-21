@@ -176,24 +176,28 @@ void stampa_partite()
 
 
 
-void conversione_lista_partite(char *buffer, size_t dim_max)
+int conversione_lista_partite(char *buffer, size_t dim_max)
 {
-    buffer[0] = '\0';  // svuota il buffer
+    buffer[0] = '\0';  
 
     pthread_mutex_lock(&lista_partite->mutex);
 
     Partita *corrente = lista_partite->head;
+    int partite_disponibili = 0;
+
     while (corrente != NULL) 
     {
         if (corrente->stato == IN_ATTESA && corrente->giocatore[1] == NULL) {
+            partite_disponibili++;
             char riga[256];
             snprintf(riga, sizeof(riga), "ID: %d | Giocatore: %s\n", corrente->id, corrente->giocatore[0]->nome);
             strncat(buffer, riga, dim_max - strlen(buffer) - 1);
         }
         corrente = corrente->next;
     }
-
+    
     pthread_mutex_unlock(&lista_partite->mutex);
+    return partite_disponibili;
 }
 
 
