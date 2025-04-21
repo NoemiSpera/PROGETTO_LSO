@@ -42,10 +42,19 @@ int gioca_con_amico(int client_fd)
     
     //lista partite
     ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-    printf("%s",buffer);
-    printf(GREEN "Inserisci l'id della partita a cui vuoi partecipare: "RESET);
-    scanf(" %s",id);
-    invia_messaggi(client_fd,id);
+    if (strstr(buffer, "Nessuna") != NULL)
+    {
+        printf("%s\n",buffer);
+        return 0;
+
+    }else {
+        printf("%s" RESET, buffer);
+        printf(GREEN "Inserisci l'id della partita a cui vuoi partecipare: "RESET);
+        scanf(" %s",id);
+        invia_messaggi(client_fd,id);
+    }
+    
+    
 
     //accettazione rifiuto o errore
     ricevi_messaggi(client_fd,buffer,sizeof(buffer));
@@ -72,19 +81,23 @@ int partita_casuale(int client_fd)
 {
     char buffer[MAX];
     ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-    printf("%s\n",buffer);
-
-    ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-    printf("%s",buffer);
-    if (strstr(buffer, "accettata!") != NULL)    {
-                
-        return 1;
-    }else if( strstr(buffer,"rifiutata") != NULL){
-
-        printf(RED "%s" RESET, buffer);
+    if (strstr(buffer, "assegnato") != NULL)    {
+        printf("%s",buffer);
+          
+    }else if(strstr(buffer,"Nessuna") != NULL){
+        printf("%s", buffer);
         return 0;
     }
 
+    ricevi_messaggi(client_fd,buffer,sizeof(buffer));
+    if (strstr(buffer, "accettata!") != NULL)    {
+        printf("%s",buffer);       
+        return 1;
+    }else if(strstr(buffer,"rifiutata") != NULL){
+
+        printf(RED"%s" RESET, buffer);
+        return 0;
+    }
 }
 
 
