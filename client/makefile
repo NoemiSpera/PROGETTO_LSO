@@ -19,7 +19,7 @@ clean:
 	rm -f client.o connessione.o impl_client.o gestione_gioco.o client
 
 run_client: client
-	./client
+	./client 127.0.0.1
 
 #per compilare usare il comando make run_client
 #per pulire i file generati usare il comando make clean

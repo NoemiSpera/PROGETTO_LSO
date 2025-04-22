@@ -1,0 +1,14 @@
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN apk update && \
+    apk add --no-cache gcc make libc-dev linux-headers netcat-openbsd libc6-compat
+
+COPY . /app/
+
+# Compila solo il client
+RUN make clean && make client
+
+# Avvia una shell interattiva (non il client direttamente)
+CMD ["/bin/sh"]

@@ -2,21 +2,25 @@
 #include "header_file/colori.h"
 
 
-int main()
+int main(int argc, char *argv[])
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
     int client_fd;
     char *nome;
     char buffer[MAX];
     char buffer_griglia[MAX];
     char scelta[10];
     
+    // Usa "myserver" come default se non viene passato nulla
+    const char *server_ip = (argc > 1) ? argv[1] : "myserver";
     // Connessione al server
-    client_fd = connetti_al_server();
+    client_fd = connetti_al_server(server_ip);
 
     pthread_t thread_notifiche;
     if (pthread_create(&thread_notifiche, NULL, ascolta_notifiche, (void *)&client_fd) != 0) {
         perror("Errore creazione thread per le notifiche");
     }   
+
     // Invio del nome al server e ricezione del messaggio di benvenuto
     nome = inserisci_nome();
     invia_messaggi(client_fd, nome);
@@ -29,6 +33,7 @@ int main()
         ricevi_messaggi(client_fd, buffer, sizeof(buffer));
         printf(YELLOW "%s" RESET, buffer);
         printf(GREEN "Inserisci la tua scelta : " RESET);
+        //fflush(stdout);
         scanf(" %s",scelta);
 
         invia_messaggi(client_fd, scelta);

@@ -71,7 +71,7 @@ char *inserisci_nome()
 {
     char *nome=malloc(MAX_NOME * sizeof(char));
     printf(LIGHT_GREEN "Inserisci il tuo nome: " RESET);
-
+    //fflush(stdout);
     scanf("%s",nome);
     return nome;
 }

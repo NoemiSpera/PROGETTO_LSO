@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 
 
 
-int main()
+
+int main(int argc, char *argv[])
 {
+    setvbuf(stdout, NULL, _IONBF, 0); 
     int server_socket;
 
     inizializza_lista();

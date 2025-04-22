@@ -3,7 +3,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <pthread.h>
@@ -15,7 +16,7 @@
 #define N 20
 
 //funzione per la connessione in connessione.c
-int connetti_al_server();
+int connetti_al_server(const char *server_ip);
 
 
 //funzioni per la comunicazione in impl_client.c

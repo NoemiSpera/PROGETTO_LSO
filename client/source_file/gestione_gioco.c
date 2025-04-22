@@ -15,6 +15,7 @@ int richiesta_partecipazione(int client_fd)
 
     
         printf("Inserisci la tua scelta: ");
+        //fflush(stdout);
         scanf(" %c", &risposta);  // Inserisci 's' o 'n'
 
         //inserisce si o no
@@ -125,6 +126,7 @@ int gestisci_partita(int client_fd)
         {
             printf("È IL TUO TURNO!\n");
             printf("Scegli una mossa (1-9): ");
+            fflush(stdout);
             scanf(" %s", mossa);
 
             invia_messaggi(client_fd, mossa);
@@ -136,14 +138,14 @@ int gestisci_partita(int client_fd)
         }
         else if (strncmp(buffer, "PARTITA_VINTA", 13) == 0)
         {
-            printf("Hai vinto!\n");
+            printf(MAGENTA"HAI VINTO!\n"RESET);
             partita_in_corso = 0;
             return 0;
         
         }
         else if (strncmp(buffer, "PARTITA_PERSA", 13) == 0)
         {
-            printf("Hai perso!\n");
+            printf(ORANGE"HAI PERSO!\n"RESET);
             partita_in_corso = 0;
             return 0;
         }
@@ -157,6 +159,7 @@ int gestisci_partita(int client_fd)
         {
             printf("Mossa non valida, riprova.\n");
             printf("Scegli una mossa (1-9): ");
+            fflush(stdout);
             scanf(" %s", mossa);
 
             invia_messaggi(client_fd, mossa);
