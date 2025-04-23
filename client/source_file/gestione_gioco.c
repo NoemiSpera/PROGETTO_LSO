@@ -67,7 +67,7 @@ int gioca_con_amico(int client_fd)
 
     }else if( strstr(buffer,"rifiutata") != NULL){
 
-        printf(RED "%s" RESET, buffer);
+        printf(RED "%s\n" RESET, buffer);
         return 0;
     }
     else if (strstr(buffer, "non esiste") != NULL) 
@@ -96,7 +96,7 @@ int partita_casuale(int client_fd)
         return 1;
     }else if(strstr(buffer,"rifiutata") != NULL){
 
-        printf(RED"%s" RESET, buffer);
+        printf(RED"%s\n" RESET, buffer);
         return 0;
     }
 }
@@ -109,6 +109,7 @@ int gestisci_partita(int client_fd)
     char buffer_griglia[N];    
     char mossa[10];
     int partita_in_corso = 1;
+    int val;
     
     while (partita_in_corso)
     {   
@@ -125,10 +126,14 @@ int gestisci_partita(int client_fd)
         if (strncmp(buffer, "TUO_TURNO", 9) == 0)
         {
             printf("È IL TUO TURNO!\n");
-            printf("Scegli una mossa (1-9): ");
-            fflush(stdout);
-            scanf(" %s", mossa);
-
+            
+            do{
+                printf("Scegli una mossa (1-9): ");
+                fflush(stdout);
+                scanf(" %s", mossa);
+                val = atoi(mossa);
+            }while(val < 1 || val > 9);
+            
             invia_messaggi(client_fd, mossa);
         }
         else if (strncmp(buffer, "ATTENDI", 7) == 0)
@@ -138,20 +143,20 @@ int gestisci_partita(int client_fd)
         }
         else if (strncmp(buffer, "PARTITA_VINTA", 13) == 0)
         {
-            printf(MAGENTA"HAI VINTO!\n"RESET);
+            printf(MAGENTA BOLD"HAI VINTO!\n"RESET);
             partita_in_corso = 0;
             return 0;
         
         }
         else if (strncmp(buffer, "PARTITA_PERSA", 13) == 0)
         {
-            printf(ORANGE"HAI PERSO!\n"RESET);
+            printf(BLUE BOLD"HAI PERSO!\n"RESET);
             partita_in_corso = 0;
             return 0;
         }
         else if (strncmp(buffer, "PAREGGIO", 8) == 0)
         {
-            printf("La partita è finita in pareggio!\n");
+            printf(LIGHT_GREEN BOLD"La partita è finita in pareggio!\n"RESET);
             partita_in_corso = 0;
             return 0;
         }

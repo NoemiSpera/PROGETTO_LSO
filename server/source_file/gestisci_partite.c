@@ -167,6 +167,7 @@ void *gestisci_gioco(void *arg)
         }else
         {       
             invia_messaggi(p->giocatore[turno]->socket, "MOSSA_NON_VALIDA\n");
+            
         } 
                
         
@@ -180,16 +181,9 @@ void *gestisci_gioco(void *arg)
 int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbolo) 
 {
     int indice = mossa -1;
-
-    if (mossa < 1 || mossa > 9) {
-
-        printf("Mossa non valida: numero fuori intervallo (1-9).\n");
-        return 0;
-    }
-
+    
     if (partita->griglia[indice] == 'X' || partita->griglia[indice] == 'O') 
     {  
-        printf("Mossa non valida: la cella è già occupata.\n");
         return 0;
     }
     

@@ -67,10 +67,6 @@ void *gestisci_client(void *arg)
             char scelta = buffer[0];
             int esito = gestisci_scelta(giocatore, scelta);  // Processa la scelta
             
-            
-            /*if (esito == 1 ) {
-                continue;
-            }*/
         } 
         else {
             // Connessione chiusa o errore
@@ -117,7 +113,7 @@ int  gestisci_scelta(Giocatori *giocatore, char scelta)
 
         case 'Q':
         case 'q':
-        printf("Uscita in corso del giocatore %s...\n", giocatore->nome);
+        printf(GREEN"Uscita in corso del giocatore %s...\n"RESET, giocatore->nome);
         rimuovi_giocatore(giocatore->socket);
         close(giocatore->socket);      
         pthread_exit(NULL);  
@@ -354,7 +350,7 @@ int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore)
     } else if( risposta[0] == 'n' || risposta[0] == 'N')
     {
         printf("%s ha rifiutato la richiesta di %s\n", creatore->nome,giocatore->nome);
-        sprintf(richiesta, "La tua richiesta è stata rifiutata da %s. Torna al menu\n", giocatore->nome);
+        sprintf(richiesta, "La tua richiesta è stata rifiutata da %s. Torna al menu", giocatore->nome);
         invia_messaggi(giocatore->socket, richiesta);  // Invia il rifiuto
         usleep(1);
         invia_messaggi(creatore->socket, "Hai rifiutato la richiesta. Resterai in attesa di un altro giocatore...\n");
