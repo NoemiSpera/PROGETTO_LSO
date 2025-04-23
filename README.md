@@ -39,7 +39,7 @@ Il progetto è strutturato nella seguente struttura composta da directory e file
         ├── impl_server.c
         ├── gestisci_giocatore.c
         └── gestisci_partite.c
----
+```
 
 # ISTRUZIONI PER L'ESECUZIONE
 
