@@ -43,10 +43,12 @@ Il progetto è strutturato nella seguente struttura composta da directory e file
 
 # ISTRUZIONI PER L'ESECUZIONE
 
-Per avviare il **docker-compose** in maniera interattiva così da vedere la comunicazione client-server, bisogna eseguire lo script di avvio, il quale:
-1. Avvierà il server.
-2. Chiederà da linea di comando quanti client si vuole aprire.
-3. Tutto sarà avviato con il comando:
+Per avviare il **docker-compose** in maniera interattiva così da vedere la comunicazione client-server, bisogna eseguire lo script di avvio, il quale si occuperà in modo automatico di creare le immagini e i container in docker. In particolare:
+1. Costruirà le immagini docker usando il comando ```docker-compose build```
+2. Creerà la rete su cui client e server comunicheranno tramite il comando ```docker network create tris-network```
+3. Avvierà il server utilizzando il comando ```docker compose up server```
+4. Viene chiesto di inserire da linea di comando quanti client si vogliono avviare
+5. Ogni client verrà avviato su una shell separata tramite il comando ```docker compose run -it --rm client ./client server 10000``` che lo renderà interattivo
 
 ```bash
 chmod +x Avvio.sh
