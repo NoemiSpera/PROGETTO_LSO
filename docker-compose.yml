@@ -3,30 +3,30 @@ services:
   server:
     image: progetto_lso_server
     build:
-      context: ./server  # Imposta il contesto di build alla cartella ./server
-      dockerfile: dockerfile  # Usa 'dockerfile' nel contesto server
+      context: ./server  
+      dockerfile: dockerfile  
     container_name: myserver
     ports:
       - "10000:10000"
     networks:
       - tris-network
-    command: ./server  # Comando per avviare il server
+    command: ./server  
 
   client:
     image: progetto_lso_client
     build:
-      context: ./client  # Imposta il contesto di build alla cartella ./client
-      dockerfile: dockerfile  # Usa 'dockerfile' nel contesto client
+      context: ./client  
+      dockerfile: dockerfile  
     container_name: tris-client
     networks:
       - tris-network
     depends_on:
       - server
-    command: ./client  # Comando per avviare il client
+    command: ./client  
 
 networks:
   tris-network:
     driver: bridge
 
 # Dockerfile for server // --> docker compose up server    
-# Dockerfile for client // --> docker compose run --rm client   e poi scrivi ./client e dovrebbe andare
+# Dockerfile for client // --> docker compose run --rm client  poi ./client

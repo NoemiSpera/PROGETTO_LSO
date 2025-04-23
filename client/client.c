@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     
     // Usa "myserver" come default se non viene passato nulla
     const char *server_ip = (argc > 1) ? argv[1] : "myserver";
+    
     // Connessione al server
     client_fd = connetti_al_server(server_ip);
 
@@ -29,11 +30,9 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        // Menu principale
         ricevi_messaggi(client_fd, buffer, sizeof(buffer));
         printf(YELLOW "%s" RESET, buffer);
         printf(GREEN "Inserisci la tua scelta : " RESET);
-        //fflush(stdout);
         scanf(" %s",scelta);
 
         invia_messaggi(client_fd, scelta);

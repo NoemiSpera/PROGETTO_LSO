@@ -65,11 +65,11 @@ void *gestisci_client(void *arg)
         int bytes_ricevuti = ricevi_messaggi(client_socket, buffer, sizeof(buffer));
         if (bytes_ricevuti > 0) {
             char scelta = buffer[0];
-            int esito = gestisci_scelta(giocatore, scelta);  // Processa la scelta
+            int esito = gestisci_scelta(giocatore, scelta);  
             
         } 
         else {
-            // Connessione chiusa o errore
+            
             free(giocatore);
             close(client_socket);
             return NULL;
@@ -210,7 +210,6 @@ int assegnazione_amico(Giocatori *giocatore)
         if (partita == NULL) {
                 
             snprintf(messaggio, sizeof(messaggio), "La partita con ID %d non esiste. Riprova dal menu!\n", id_partita);
-            //mettere il messaggio di ricezione nel client
             invia_messaggi(giocatore->socket, messaggio);  
             return -1;
             
@@ -227,7 +226,7 @@ int assegnazione_amico(Giocatori *giocatore)
             partita->giocatore[0]->in_partita = 1;
 
             pthread_mutex_lock(&partita->mutex);
-            pthread_cond_signal(&partita->cond);  // Svegliamo il creatore
+            pthread_cond_signal(&partita->cond);  // Sveglio il creatore
             pthread_mutex_unlock(&partita->mutex);
             avvia_thread_partita(partita);
             
@@ -285,7 +284,7 @@ int assegnazione_casuale(Giocatori *giocatore)
             partita->giocatore[0]->in_partita = 1;
 
             pthread_mutex_lock(&partita->mutex);
-            pthread_cond_signal(&partita->cond); // Svegliamo il creatore
+            pthread_cond_signal(&partita->cond); // Sveglio il creatore
             pthread_mutex_unlock(&partita->mutex);
             avvia_thread_partita(partita);
             return 1;
@@ -307,7 +306,7 @@ int assegnazione_casuale(Giocatori *giocatore)
 
 Partita *cerca_partita_disponibile(Giocatori *giocatore)
 {
-    pthread_mutex_lock(&lista_partite->mutex); // Blocca il mutex
+    pthread_mutex_lock(&lista_partite->mutex);
 
     Partita *current = lista_partite->head;
 
@@ -315,13 +314,13 @@ Partita *cerca_partita_disponibile(Giocatori *giocatore)
     {
         if (current->stato == IN_ATTESA)
         {
-            pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
+            pthread_mutex_unlock(&lista_partite->mutex);
             return current;
         }
         current = current->next;
     }
 
-    pthread_mutex_unlock(&lista_partite->mutex); // Sblocca il mutex
+    pthread_mutex_unlock(&lista_partite->mutex); 
     return NULL;     
 }
 
@@ -363,18 +362,18 @@ int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore)
 
 
 Partita* trova_partita(int id_partita) {
-    pthread_mutex_lock(&lista_partite->mutex);  // Blocca il mutex
+    pthread_mutex_lock(&lista_partite->mutex);  
 
     Partita *current = lista_partite->head;
 
     while (current != NULL) {
         if (current->id == id_partita) {
-            pthread_mutex_unlock(&lista_partite->mutex);  // Sblocca il mutex
+            pthread_mutex_unlock(&lista_partite->mutex); 
             return current;
         }
         current = current->next;
     }
 
-    pthread_mutex_unlock(&lista_partite->mutex);  // Sblocca il mutex
-    return NULL;  // Se non trova la partita
+    pthread_mutex_unlock(&lista_partite->mutex);  
+    return NULL;  
 }

@@ -15,7 +15,6 @@ int richiesta_partecipazione(int client_fd)
 
     
         printf("Inserisci la tua scelta: ");
-        //fflush(stdout);
         scanf(" %c", &risposta);  // Inserisci 's' o 'n'
 
         //inserisce si o no

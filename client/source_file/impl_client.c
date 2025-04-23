@@ -39,7 +39,7 @@ ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size)
     if (n == 0) {
 
         printf("Connessione chiusa dal server.\n");
-        return 0;  // Ritorna 0 per segnalare la chiusura
+        return 0;  
     }
     else if (n < 0) {
        
@@ -71,7 +71,6 @@ char *inserisci_nome()
 {
     char *nome=malloc(MAX_NOME * sizeof(char));
     printf(LIGHT_GREEN "Inserisci il tuo nome: " RESET);
-    //fflush(stdout);
     scanf("%s",nome);
     return nome;
 }
