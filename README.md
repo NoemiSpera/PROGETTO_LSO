@@ -15,6 +15,8 @@ Il progetto è strutturato nella seguente struttura composta da directory e file
 ├── docker-compose.yml
 ├── Avvio.sh
 ├── client
+│   ├── dockerfile
+│   └── makefile
 │   ├── client.c
 │   ├── header_file
 │   │   ├── colori.h
@@ -23,8 +25,6 @@ Il progetto è strutturato nella seguente struttura composta da directory e file
 │   │   ├── connessione.c
 │   │   ├── impl_client.c
 │   │   └── gestione_gioco.c
-│   ├── dockerfile
-│   └── makefile
 ├── documentazione
 │   ├── DOCUMENTAZIONE.pdf
 └── server
