@@ -50,6 +50,7 @@ Per avviare il **docker-compose** in maniera interattiva così da vedere la comu
 4. Viene chiesto di inserire da linea di comando quanti client si vogliono avviare
 5. Ogni client verrà avviato su una shell separata tramite il comando ```docker compose run -it --rm client ./client server 10000``` che lo renderà interattivo
 
+Per avviare lo script che si occupa dell'esecuzione digitare i seguenti comandi:
 ```bash
 chmod +x Avvio.sh
 ./Avvio.sh
