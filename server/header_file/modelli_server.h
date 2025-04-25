@@ -24,6 +24,7 @@ extern pthread_mutex_t partite_mutex;
 extern atomic_int num_partite;
 
 
+typedef enum { NESSUNA, IN_SELEZIONE_ID, IN_CASUALE, IN_PARTITA } SceltaGiocatore;
 
  //strutture
 typedef struct 
@@ -33,7 +34,8 @@ typedef struct
     int id_partita;
     int stato;                  /* 0 = "non è il suo turno" | 1 = "è il suo turno" */
     int in_partita;
-    char simbolo[10];             
+    char simbolo[10];
+    SceltaGiocatore scelta;               
 } Giocatori;
 
 typedef enum { NUOVA, IN_ATTESA, IN_ACCETTAZIONE, IN_CORSO, TERMINATA } StatoPartita;
@@ -83,6 +85,7 @@ void invia_menu_principale(int client_fd);
 void invia_messaggi(int client_fd, char *msg);
 ssize_t ricevi_messaggi(int client_fd, char *buffer, size_t buf_size);
 void messaggio_broadcast(Giocatori *creatore, int id_partita);
+void notifica_occupazione_partita(int id_occupato);
 
 
 //gestione delle liste in impl_servr.c

@@ -100,12 +100,14 @@ int  gestisci_scelta(Giocatori *giocatore, char scelta)
         
         case 'A':
         case 'a':
+            giocatore->scelta=IN_SELEZIONE_ID;
             printf("%s ha scelto di giocare con un amico\n", giocatore->nome);
             int esito = assegnazione_amico(giocatore); // Richiesta di assegnazione con amico
             return esito;
         
         case 'B':
         case 'b':
+            giocatore->scelta=IN_CASUALE;
             printf("%s ha scelto di partecipare ad una partita casuale\n", giocatore->nome);
             int esito_casuale = assegnazione_casuale(giocatore); // Partecipazione casuale
             return esito_casuale;
@@ -224,10 +226,13 @@ int assegnazione_amico(Giocatori *giocatore)
             giocatore->id_partita = partita->id;
             strcpy(giocatore->simbolo, "O");
             giocatore->in_partita = 1;
+            giocatore->scelta = NESSUNA;
 
             partita->giocatore[1] = giocatore;
             partita->giocatore[0]->in_partita = 1;
-
+            partita->giocatore[0]->scelta = NESSUNA;
+            
+            notifica_occupazione_partita(partita->id);
             pthread_mutex_lock(&partita->mutex);
             pthread_cond_signal(&partita->cond);  // Sveglio il creatore
             pthread_mutex_unlock(&partita->mutex);
@@ -285,10 +290,13 @@ int assegnazione_casuale(Giocatori *giocatore)
             giocatore->id_partita = partita->id;
             strcpy(giocatore->simbolo, "O");
             giocatore->in_partita = 1;
+            giocatore->scelta = NESSUNA;
 
             partita->giocatore[1] = giocatore;
             partita->giocatore[0]->in_partita = 1;
+            partita->giocatore[0]->scelta = NESSUNA;
 
+            notifica_occupazione_partita(partita->id);
             pthread_mutex_lock(&partita->mutex);
             pthread_cond_signal(&partita->cond); // Sveglio il creatore
             pthread_mutex_unlock(&partita->mutex);

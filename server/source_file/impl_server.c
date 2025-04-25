@@ -54,7 +54,7 @@ void invia_messaggi(int client_fd, char *msg)
 void messaggio_broadcast(Giocatori *creatore, int id_partita)
 {
     char msg[MAX];
-    snprintf(msg, sizeof(msg),"[NOTIFICA] %s ha creato una nuova partita! ID: %d\nDigita 'A' per unirti come amico!",creatore->nome, id_partita);
+    snprintf(msg, sizeof(msg),"[NOTIFICA] %s ha creato una nuova partita! ID: %d\nUnisciti!",creatore->nome, id_partita);
 
     pthread_mutex_lock(&mutex_giocatori);
     int notifiche_inviate = 0;
@@ -75,6 +75,38 @@ void messaggio_broadcast(Giocatori *creatore, int id_partita)
     pthread_mutex_unlock(&mutex_giocatori);
 }
 
+
+void notifica_occupazione_partita(int id_occupato)
+{
+    char buffer[MAX*2];
+    char notifica[MAX*3];
+    Giocatori *g;
+
+    // Ricava la lista aggiornata
+    conversione_lista_partite(buffer, sizeof(buffer));
+    if (buffer[0] == '\0') {
+        snprintf(notifica, sizeof(notifica), 
+        "[NOTIFICA] La partita %d è stata occupata.\nNessuna partita è piu disponibile. Attendi...\n",id_occupato);
+    }else{
+   
+        snprintf(notifica, sizeof(notifica), 
+            "[NOTIFICA] La partita %d è stata occupata.\nLista aggiornata:\n%s\nInserisci scelta:", 
+            id_occupato, buffer);
+    }
+
+    pthread_mutex_lock(&mutex_giocatori);
+    
+    for (int i = 0; i < MAX_COLLEGATI; i++) 
+    {
+        Giocatori *g = giocatori_connessi[i];
+        if (g != NULL && g->scelta == IN_SELEZIONE_ID) 
+        {
+            invia_messaggi(g->socket, notifica);
+        }
+    }
+    pthread_mutex_unlock(&mutex_giocatori);
+
+}
 
 
 //funzioni per la gestione della lista delle partite
