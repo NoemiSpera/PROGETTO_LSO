@@ -33,12 +33,13 @@ typedef struct
     int id_partita;
     int stato;                  /* 0 = "non è il suo turno" | 1 = "è il suo turno" */
     int in_partita;
-    char simbolo[10];              
+    char simbolo[10];             
 } Giocatori;
 
-typedef enum { NUOVA, IN_ATTESA, IN_CORSO, TERMINATA } StatoPartita;
+typedef enum { NUOVA, IN_ATTESA, IN_ACCETTAZIONE, IN_CORSO, TERMINATA } StatoPartita;
 
 typedef enum { NESSUNO, VITTORIA_SCONFITTA, PAREGGIO } EsitoPartita;
+
 
 typedef struct Partita
 {

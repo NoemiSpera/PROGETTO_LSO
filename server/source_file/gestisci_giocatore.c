@@ -216,6 +216,9 @@ int assegnazione_amico(Giocatori *giocatore)
         }
 
         Giocatori *creatore = partita->giocatore[0];
+        pthread_mutex_lock(&partita->mutex);
+        partita->stato = IN_ACCETTAZIONE;
+        pthread_mutex_unlock(&partita->mutex);
         if (notifica_creatore(partita, creatore, giocatore) == 1)
         {
             giocatore->id_partita = partita->id;
@@ -274,6 +277,9 @@ int assegnazione_casuale(Giocatori *giocatore)
         snprintf(msg, sizeof(msg),"Sei stato assegnato alla partita %d. attendiamo la risposta del creatore\n", partita->id);
         invia_messaggi(giocatore->socket,msg);
 
+        pthread_mutex_lock(&partita->mutex);
+        partita->stato = IN_ACCETTAZIONE;
+        pthread_mutex_unlock(&partita->mutex);
         if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1)
         {
             giocatore->id_partita = partita->id;
@@ -344,6 +350,9 @@ int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore)
         printf("%s ha accettato la richiesta di %s. La partita inizia\n", creatore->nome,giocatore->nome);
         invia_messaggi(creatore->socket, "Hai accettato la richiesta! La partita inizia.\n");
         invia_messaggi(giocatore->socket, "La tua richiesta è stata accettata! La partita inizia.\n");
+        pthread_mutex_lock(&partita->mutex);
+        partita->stato = IN_CORSO;
+        pthread_mutex_unlock(&partita->mutex);
         return 1;
 
     } else if( risposta[0] == 'n' || risposta[0] == 'N')
@@ -353,6 +362,9 @@ int notifica_creatore(Partita *partita,Giocatori *creatore,Giocatori *giocatore)
         invia_messaggi(giocatore->socket, richiesta);  // Invia il rifiuto
         usleep(1);
         invia_messaggi(creatore->socket, "Hai rifiutato la richiesta. Resterai in attesa di un altro giocatore...\n");
+        pthread_mutex_lock(&partita->mutex);
+        partita->stato = IN_ATTESA;
+        pthread_mutex_unlock(&partita->mutex);
         return -1;
 
     }
