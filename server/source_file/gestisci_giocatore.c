@@ -195,56 +195,80 @@ int assegnazione_amico(Giocatori *giocatore)
     Partita *partita = NULL;
 
     if (conversione_lista_partite(messaggio, sizeof(messaggio)) == 0) {
-        snprintf(messaggio, sizeof(messaggio), RED"Nessuna partita disponibile al momento. Torno al menu"RESET);
+        snprintf(messaggio, sizeof(messaggio), RED"Nessuna partita disponibile al momento. Torno al menu\n"RESET);
         invia_messaggi(giocatore->socket, messaggio);
         usleep(1);
         return -1;
-    
-    }else{
-        invia_messaggi(giocatore->socket,messaggio);
-         // Riceve l'ID della partita dal client
+    } else {
+        invia_messaggi(giocatore->socket, messaggio);
         ricevi_messaggi(giocatore->socket, messaggio, sizeof(messaggio));
-        id_partita = atoi(messaggio);  
+        id_partita = atoi(messaggio);
 
-        // Cerca la partita
         partita = trova_partita(id_partita);
 
         if (partita == NULL) {
-                
             snprintf(messaggio, sizeof(messaggio), "La partita con ID %d non esiste. Riprova dal menu!\n", id_partita);
-            invia_messaggi(giocatore->socket, messaggio);  
+            invia_messaggi(giocatore->socket, messaggio);
             return -1;
-            
         }
 
-        Giocatori *creatore = partita->giocatore[0];
         pthread_mutex_lock(&partita->mutex);
-        partita->stato = IN_ACCETTAZIONE;
-        pthread_mutex_unlock(&partita->mutex);
-        if (notifica_creatore(partita, creatore, giocatore) == 1)
-        {
+
+        // Controlli sulla disponibilità della partita
+
+        if (partita->richiedente != NULL) {
+            pthread_mutex_unlock(&partita->mutex);
+            invia_messaggi(giocatore->socket, "Un altro giocatore ha già fatto richiesta. Torni al menu.");
+            return -1;
+        }else{
+           
+            // Imposta il richiedente e stato
+            partita->richiedente = giocatore;
+            partita->stato = IN_ACCETTAZIONE;
+            pthread_mutex_unlock(&partita->mutex);
+
+            snprintf(messaggio, sizeof(messaggio),
+                    "Hai richiesto di unirti alla partita %d. Attendi la risposta dell'amico...\n", partita->id);
+            invia_messaggi(giocatore->socket, messaggio);
+        }
+
+
+        // Notifica al creatore/amico
+        if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1) {
+            pthread_mutex_lock(&partita->mutex);
+            partita->giocatore[1] = giocatore;
+            partita->richiedente = NULL;
+            partita->stato = IN_CORSO;
+            pthread_mutex_unlock(&partita->mutex);
+
             giocatore->id_partita = partita->id;
-            strcpy(giocatore->simbolo, "O");
             giocatore->in_partita = 1;
             giocatore->scelta = NESSUNA;
+            strcpy(giocatore->simbolo, "O");
 
-            partita->giocatore[1] = giocatore;
             partita->giocatore[0]->in_partita = 1;
             partita->giocatore[0]->scelta = NESSUNA;
-            
+
             notifica_occupazione_partita(partita->id);
             pthread_mutex_lock(&partita->mutex);
-            pthread_cond_signal(&partita->cond);  // Sveglio il creatore
+            pthread_cond_signal(&partita->cond);
             pthread_mutex_unlock(&partita->mutex);
+
             avvia_thread_partita(partita);
-            
             return 1;
-        } 
-        else {
-            return -1;  // Partita rifiutata
+        } else {
+            // Rifiuto → reset
+            pthread_mutex_lock(&partita->mutex);
+            partita->richiedente = NULL;
+            partita->stato = IN_ATTESA;
+            pthread_mutex_unlock(&partita->mutex);
+
+
+            return -1;
         }
-    }  
+    }
 }
+
 
 
 
@@ -270,51 +294,75 @@ int numero_partite_disponibili() {
 }
 
 
-
 int assegnazione_casuale(Giocatori *giocatore)
 {
     Partita *partita = cerca_partita_disponibile(giocatore);
-
     char msg[MAX];
 
     if (partita != NULL)
     {
-        snprintf(msg, sizeof(msg),"Sei stato assegnato alla partita %d. attendiamo la risposta del creatore\n", partita->id);
-        invia_messaggi(giocatore->socket,msg);
-
         pthread_mutex_lock(&partita->mutex);
-        partita->stato = IN_ACCETTAZIONE;
-        pthread_mutex_unlock(&partita->mutex);
-        if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1)
-        {
+
+        if (partita->richiedente != NULL) {
+            pthread_mutex_unlock(&partita->mutex);
+            invia_messaggi(giocatore->socket, "Qualcun altro sta già richiedendo di unirsi. Torni al menu.");
+            return -1;
+        }else{
+            
+            // Imposta il richiedente
+            partita->richiedente = giocatore;
+            partita->stato = IN_ACCETTAZIONE;
+
+            pthread_mutex_unlock(&partita->mutex);
+
+            snprintf(msg, sizeof(msg),
+                    "Hai richiesto di unirti alla partita %d. Attendi la risposta del creatore...\n",
+                    partita->id);
+            invia_messaggi(giocatore->socket, msg);
+
+        }
+
+       
+
+        // Notifica il creatore
+        if (notifica_creatore(partita, partita->giocatore[0], giocatore) == 1) {
+            pthread_mutex_lock(&partita->mutex);
+            partita->giocatore[1] = giocatore;
+            partita->richiedente = NULL;
+            partita->stato = IN_CORSO;
+            pthread_mutex_unlock(&partita->mutex);
+
             giocatore->id_partita = partita->id;
-            strcpy(giocatore->simbolo, "O");
             giocatore->in_partita = 1;
+            strcpy(giocatore->simbolo, "O");
             giocatore->scelta = NESSUNA;
 
-            partita->giocatore[1] = giocatore;
             partita->giocatore[0]->in_partita = 1;
             partita->giocatore[0]->scelta = NESSUNA;
 
             notifica_occupazione_partita(partita->id);
             pthread_mutex_lock(&partita->mutex);
-            pthread_cond_signal(&partita->cond); // Sveglio il creatore
+            pthread_cond_signal(&partita->cond);
             pthread_mutex_unlock(&partita->mutex);
+
             avvia_thread_partita(partita);
             return 1;
-        }
-        else
-        {
-            return -1; // Partita rifiutata
+        } else {
+            // Rifiutato → reset richiedente
+            pthread_mutex_lock(&partita->mutex);
+            partita->richiedente = NULL;
+            partita->stato = IN_ATTESA;
+            pthread_mutex_unlock(&partita->mutex);
+
+            return -1;
         }
     }
-    else{
-        invia_messaggi(giocatore->socket,RED"Nessuna partita disponibile al momento. Torno al menu\n"RESET);
-        usleep(1);
+    else {
+        invia_messaggi(giocatore->socket,"Nessuna partita disponibile.\n");
         return -1;
     }
-
 }
+
 
 
 

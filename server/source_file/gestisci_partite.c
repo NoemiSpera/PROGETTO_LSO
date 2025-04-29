@@ -45,6 +45,7 @@ Partita* inizializza_partita(int id_partita, Giocatori *giocatore)
     giocatore->id_partita = id_partita;
     strcpy(giocatore->simbolo, "X");
     giocatore->in_partita = 1;
+    nuova_partita->richiedente = NULL;
 
     nuova_partita->giocatore[0] = giocatore;
     nuova_partita->giocatore[1] = NULL;
@@ -106,8 +107,7 @@ void *gestisci_gioco(void *arg)
         //ricezione della mossa effettuata dal giocatore
         ricevi_messaggi(p->giocatore[turno]->socket, messaggio, sizeof(messaggio));
         int mossa=atoi(messaggio);
-
-       
+        
         if(mossa_valida(p,mossa,p->giocatore[turno],p->giocatore[turno]->simbolo))
         {
         
@@ -163,10 +163,6 @@ void *gestisci_gioco(void *arg)
             }
 
             p->turno = avversario;
-           
-        }else
-        {       
-            invia_messaggi(p->giocatore[turno]->socket, "MOSSA_NON_VALIDA\n");
             
         } 
                
@@ -182,10 +178,10 @@ int mossa_valida(Partita *partita, int mossa, Giocatori *giocatore, char *simbol
 {
     int indice = mossa -1;
     
-    if (partita->griglia[indice] == 'X' || partita->griglia[indice] == 'O') 
+    /*if (partita->griglia[indice] == 'X' || partita->griglia[indice] == 'O') 
     {  
         return 0;
-    }
+    }*/
     
     partita->griglia[indice] = *simbolo;  
     return 1;

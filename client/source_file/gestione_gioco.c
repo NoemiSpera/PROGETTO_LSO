@@ -48,12 +48,26 @@ int gioca_con_amico(int client_fd)
         return 0;
 
     }else {
-        printf("%s" RESET, buffer);
+        printf("%s", buffer);
         printf(GREEN "Inserisci l'id della partita a cui vuoi partecipare: "RESET);
         scanf(" %s",id);
         invia_messaggi(client_fd,id);
     }
     
+    ricevi_messaggi(client_fd,buffer,sizeof(buffer));
+    if (strstr(buffer, "non esiste") != NULL)
+    {
+        printf("%s",buffer);
+        return 0;
+
+    }else if( strstr(buffer,"ha già fatto richiesta") != NULL){
+
+        printf(RED"%s\n" RESET, buffer);
+        return 0;
+    }else{
+
+        printf("%s",buffer);
+    }
     
 
     //accettazione rifiuto o errore
@@ -69,11 +83,6 @@ int gioca_con_amico(int client_fd)
         printf(RED "%s\n" RESET, buffer);
         return 0;
     }
-    else if (strstr(buffer, "non esiste") != NULL) 
-    {
-        printf(RED "%s" RESET, buffer);
-        return 0; 
-    }
 }
 
 
@@ -81,11 +90,14 @@ int partita_casuale(int client_fd)
 {
     char buffer[MAX];
     ricevi_messaggi(client_fd,buffer,sizeof(buffer));
-    if (strstr(buffer, "assegnato") != NULL)    {
+    if (strstr(buffer, "Hai richiesto") != NULL)    {
         printf("%s",buffer);
           
+    }else if(strstr(buffer,"richiedendo di unirsi") != NULL){
+        printf(RED"%s\n" RESET, buffer);
+        return 0;
     }else if(strstr(buffer,"Nessuna") != NULL){
-        printf("%s", buffer);
+        printf(RED"%s\n" RESET, buffer);
         return 0;
     }
 
@@ -126,13 +138,26 @@ int gestisci_partita(int client_fd)
         {
             printf("È IL TUO TURNO!\n");
             
-            do{
-                printf("Scegli una mossa (1-9): ");
-                fflush(stdout);
-                scanf(" %s", mossa);
-                val = atoi(mossa);
-            }while(val < 1 || val > 9);
-            
+            int mossa_valida = 0;
+
+            while (!mossa_valida)
+            {
+                
+                do {
+                    printf("Scegli una mossa (1-9): ");
+                    fflush(stdout);
+                    scanf(" %s", mossa);
+                    val = atoi(mossa);
+                } while (val < 1 || val > 9);
+
+                // Controllo se la casella è già occupata nella griglia
+                if (buffer_griglia[val - 1] == 'X' || buffer_griglia[val - 1] == 'O') {
+                    printf("Casella già occupata! Riprova.\n");
+                } else {
+                    mossa_valida = 1;
+                }
+            }
+
             invia_messaggi(client_fd, mossa);
         }
         else if (strncmp(buffer, "ATTENDI", 7) == 0)
@@ -159,7 +184,7 @@ int gestisci_partita(int client_fd)
             partita_in_corso = 0;
             return 0;
         }
-        else if (strncmp(buffer, "MOSSA_NON_VALIDA", 16) == 0)
+        /*else if (strncmp(buffer, "MOSSA_NON_VALIDA", 16) == 0)
         {
             printf("Mossa non valida, riprova.\n");
             printf("Scegli una mossa (1-9): ");
@@ -167,7 +192,7 @@ int gestisci_partita(int client_fd)
             scanf(" %s", mossa);
 
             invia_messaggi(client_fd, mossa);
-        }
+        }*/
         else
         {
             printf("Errore: messaggio sconosciuto ricevuto: %s\n", buffer);

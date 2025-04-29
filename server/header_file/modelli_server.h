@@ -47,6 +47,7 @@ typedef struct Partita
 {
     int id;
     Giocatori *giocatore[MAX_GIOCATORI];
+    Giocatori *richiedente;
     char griglia[N];
     StatoPartita stato;                    
     int turno;

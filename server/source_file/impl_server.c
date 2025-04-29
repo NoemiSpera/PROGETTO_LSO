@@ -86,12 +86,11 @@ void notifica_occupazione_partita(int id_occupato)
     conversione_lista_partite(buffer, sizeof(buffer));
     if (buffer[0] == '\0') {
         snprintf(notifica, sizeof(notifica), 
-        "[NOTIFICA] La partita %d è stata occupata.\nNessuna partita è piu disponibile. Attendi...\n",id_occupato);
+        "[NOTIFICA] La partita %d è stata occupata.\nNessuna partita è piu disponibile. Attendi...",id_occupato);
     }else{
    
         snprintf(notifica, sizeof(notifica), 
-            "[NOTIFICA] La partita %d è stata occupata.\nLista aggiornata:\n%s\nInserisci scelta:", 
-            id_occupato, buffer);
+            "[NOTIFICA] La partita %d è stata occupata.\nLista aggiornata:\n%s", id_occupato, buffer);
     }
 
     pthread_mutex_lock(&mutex_giocatori);
